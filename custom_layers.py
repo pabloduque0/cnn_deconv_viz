@@ -1,34 +1,24 @@
 from keras import backend as K
 from keras.engine.topology import Layer
 import tensorflow as tf
+from keras.layers import MaxPool2D
 
+class MaxPoolingWithArgmax2D(MaxPool2D):
 
-class Maxpooling_with_argmaxCPU(Layer):
+    def __init__(self, **kwargs):
+        super(MaxPoolingWithArgmax2D, self).__init__(**kwargs)
 
-    def __init__(self, output_dim, **kwargs):
-        self.output_dim = output_dim
-        super(Maxpooling_with_argmaxCPU, self).__init__(**kwargs)
+    def call(self, inputs, **kwargs):
+
+        output = super(MaxPoolingWithArgmax2D, self).call(inputs)
+        argmax = K.gradients(K.sum(output), inputs)
+        return output, argmax
 
     def build(self, input_shape):
-        # Create a trainable weight variable for this layer.
-        self.kernel = self.add_weight(name='kernel',
-                                      shape=(input_shape[1:], self.output_dim),
-                                      initializer='uniform',
-                                      trainable=True)
-        super(Maxpooling_with_argmaxCPU, self).build(input_shape)  # Be sure to call this at the end
-
-    def call(self, x, **kwargs):
-        input_shape = K.shape(x)
-
-        output_shape = [_shape // 2 for _shape in K.int_shape(x)]
-
-        output = K.zeros(*output_shape)
-
-        return output
+        return super(MaxPoolingWithArgmax2D, self).build(input_shape)
 
     def compute_output_shape(self, input_shape):
-        return (input_shape[0], self.output_dim)
-
+        return super(MaxPoolingWithArgmax2D, self).compute_output_shape(input_shape)
 
 
 def unpooling2D(x, **kwargs):
@@ -37,7 +27,7 @@ def unpooling2D(x, **kwargs):
         raise ValueError('Argmax is needed for unpooling layer')
 
     argmax = kwargs['argmax']
-
+    output_shape = [_shape // 2 for _shape in K.int_shape(x)]
     output = K.zeros(*output_shape)
 
     height = K.shape(output)[0]
@@ -66,3 +56,31 @@ def unpooling2D(x, **kwargs):
     delta = K.SparseTensor(indices, values, K.to_int64(K.shape(output)))
     return K.expand_dims(K.sparse_tensor_to_dense(K.sparse_reorder(delta)), 0)
 
+
+def call(self, inputs, output_shape=None):
+    updates, mask = inputs[0], inputs[1]
+    with K.tf.variable_scope(self.name):
+        mask = K.cast(mask, 'int32')
+        input_shape = K.tf.shape(updates, out_type='int32')
+        #  calculation new shape
+        if output_shape is None:
+            output_shape = (
+            input_shape[0], input_shape[1] * self.size[0], input_shape[2] * self.size[1], input_shape[3])
+        self.output_shape1 = output_shape
+
+        # calculation indices for batch, height, width and feature maps
+        one_like_mask = K.ones_like(mask, dtype='int32')
+        batch_shape = K.concatenate([[input_shape[0]], [1], [1], [1]], axis=0)
+        batch_range = K.reshape(K.tf.range(output_shape[0], dtype='int32'), shape=batch_shape)
+        b = one_like_mask * batch_range
+        y = mask // (output_shape[2] * output_shape[3])
+        x = (mask // output_shape[3]) % output_shape[2]
+        feature_range = K.tf.range(output_shape[3], dtype='int32')
+        f = one_like_mask * feature_range
+
+        # transpose indices & reshape update values to one dimension
+        updates_size = K.tf.size(updates)
+        indices = K.transpose(K.reshape(K.stack([b, y, x, f]), [4, updates_size]))
+        values = K.reshape(updates, [updates_size])
+        ret = K.tf.scatter_nd(indices, values, output_shape)
+        return ret
