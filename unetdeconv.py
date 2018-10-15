@@ -12,7 +12,7 @@ import cv2
 import numpy as np
 from keras import activations
 
-class TwoDUnet():
+class UnetDeconv():
 
     def __init__(self, model_path=None, img_shape=None):
 
@@ -81,13 +81,14 @@ class TwoDUnet():
 
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='sigmoid')(conv22)
 
-        deconv_1 = layers.Conv2D(1, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
+        deconv_1 = layers.Conv2DTranspose(1, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
         deconv_0 = layers.multiply([deconv_1, inputs])
 
         model = models.Model(inputs=[inputs], outputs=[conv23, deconv_0])
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
-                                                                                   predicted_count, predicted_sum, ground_truth_count, ground_truth_sum])
+                                                                                   predicted_count, predicted_sum, ground_truth_count,
+                                                                                 ground_truth_sum])
         model.summary()
 
         return model
