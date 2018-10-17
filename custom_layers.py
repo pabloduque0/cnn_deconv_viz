@@ -37,28 +37,30 @@ def unpooling2D(x, **kwargs):
     channels = K.shape(output)[2]
     # build the indices for a SparseTensor addition like http://stackoverflow.com/a/34686952/3524844
 
-    t1 = tf.to_int64(tf.range(channels))
+    t1 = tf.to_float(tf.range(channels))
     t1 = K.tile(t1, [(width // 2) * (height // 2)])
     t1 = K.reshape(t1, [-1, channels])
     print(K.eval(t1), len(K.eval(t1)), len(K.eval(t1[0])))
     t1 = tf.transpose(t1, perm=[1, 0])
     t1 = K.reshape(t1, [channels, height // 2, width // 2, 1])
 
-    t2 = K.squeeze(argmax)
-    t2 = tf.pack((t2[0], t2[1]), axis=0)
+    t2 = tf.squeeze(argmax)
+    t2 = tf.stack((t2[0], t2[1]), axis=0)
     t2 = tf.transpose(t2, perm=[3, 1, 2, 0])
 
-    t = tf.concat(3, [t2, t1])
+    t = tf.concat([t2, t1], 3)
     indices = K.reshape(t, [(height // 2) * (width // 2) * channels, 3])
+    indices = tf.to_int64(indices)
     # Get the values for max_unpooling (used in addition with argmax location)
-    x1 = K.squeeze(x)
+    x1 = tf.squeeze(x)
     x1 = K.reshape(x1, [-1, channels])
-    x1 = K.transpose(x1, perm=[1, 0])
+    x1 = tf.transpose(x1, perm=[1, 0])
     values = K.reshape(x1, [-1])
     # perform addition
-    delta = K.SparseTensor(indices, values, K.to_int64(K.shape(output)))
-    return K.expand_dims(K.sparse_tensor_to_dense(K.sparse_reorder(delta)), 0)
+    delta = tf.SparseTensor(indices, values, tf.to_int64(K.shape(output)))
+    final_output = K.expand_dims(tf.sparse_tensor_to_dense(tf.sparse_reorder(delta)), 0)
 
+    return final_output
 
 def call(self, inputs, output_shape=None):
     updates, mask = inputs[0], inputs[1]
