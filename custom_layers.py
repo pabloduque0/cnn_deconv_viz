@@ -9,26 +9,28 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
         super(MaxPoolingWithArgmax2D, self).__init__(**kwargs)
 
     def call(self, inputs, **kwargs):
-
         output = super(MaxPoolingWithArgmax2D, self).call(inputs)
         argmax = K.gradients(K.sum(output), inputs)
-        return output, argmax
+        return [output, argmax[0]]
 
     def build(self, input_shape):
         return super(MaxPoolingWithArgmax2D, self).build(input_shape)
 
     def compute_output_shape(self, input_shape):
-        return super(MaxPoolingWithArgmax2D, self).compute_output_shape(input_shape)
-
+        pooling_shape = super(MaxPoolingWithArgmax2D, self).compute_output_shape(input_shape)
+        argmax_shape = input_shape
+        return [pooling_shape, argmax_shape]
 
 def unpooling2D(x, **kwargs):
 
     if 'argmax' not in kwargs:
-        raise ValueError('Argmax is needed for unpooling layer')
+        raise ValueError('argmax is needed for unpooling layer')
 
     argmax = kwargs['argmax']
-    output_shape = [_shape // 2 for _shape in K.int_shape(x)]
-    output = K.zeros(*output_shape)
+    output_shape = list(K.int_shape(x))
+    output_shape[1] *= 2
+    output_shape[2] *= 2
+    output = K.zeros(tuple(output_shape[1:]))
 
     height = K.shape(output)[0]
     width = K.shape(output)[1]
@@ -38,6 +40,7 @@ def unpooling2D(x, **kwargs):
     t1 = tf.to_int64(tf.range(channels))
     t1 = K.tile(t1, [(width // 2) * (height // 2)])
     t1 = K.reshape(t1, [-1, channels])
+    print(K.eval(t1), len(K.eval(t1)), len(K.eval(t1[0])))
     t1 = tf.transpose(t1, perm=[1, 0])
     t1 = K.reshape(t1, [channels, height // 2, width // 2, 1])
 
