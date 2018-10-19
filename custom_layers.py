@@ -11,6 +11,11 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
     def call(self, inputs, **kwargs):
         output = super(MaxPoolingWithArgmax2D, self).call(inputs)
         argmax = K.gradients(K.sum(output), inputs)
+
+        zero = tf.constant(0, dtype=tf.float32)
+        argmax = tf.not_equal(argmax[0], zero)
+        argmax = tf.where(argmax)
+
         return [output, argmax[0]]
 
     def build(self, input_shape):
@@ -61,6 +66,21 @@ def unpooling2D(x, **kwargs):
     final_output = K.expand_dims(tf.sparse_tensor_to_dense(tf.sparse_reorder(delta)), 0)
 
     return final_output
+
+
+def get_ordered_argmax(argmax, poolsize):
+
+    if len(argmax.shape) != 3:
+        raise ValueError('get_ordered_armax expects a tf.squeezed tensor input')
+
+    rows, columns, channels = K.int_shape(argmax)
+    for chan in channels:
+        for i, j in zip(range(0, rows, poolsize[0]), range(0, columns, poolsize[1])):
+            pass
+
+
+
+
 
 def call(self, inputs, output_shape=None):
     updates, mask = inputs[0], inputs[1]
