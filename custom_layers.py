@@ -90,6 +90,42 @@ def get_ordered_argmax(argmax, poolsize):
     return ordered_indices
 
 
+def get_ordered_argmax_fast(input_data, poolsize):
+
+    input_data = K.eval(input_data)
+    batch, rows, columns, channels = input_data.shape
+
+    poolsize = np.array(poolsize)
+
+    arr_in = np.ascontiguousarray(input_data)
+    new_shape = tuple(np.array(input_data.shape) // poolsize) + tuple(poolsize)
+    new_strides = tuple(input_data.strides * poolsize) + input_data.strides
+
+    arr_out = as_strided(arr_in, shape=new_shape, strides=new_strides)
+    reshape_to = list(arr_out.shape)
+    reshape_to[-1], reshape_to[-2] = np.cumprod(poolsize)[-1], 1
+    reshaped = np.reshape(arr_out, reshape_to)
+    argmax = np.argmax(reshaped, axis=3)
+
+    argmax_row = argmax // poolsize[1]
+    argmax_col = argmax % poolsize[1]
+
+    section_indexes = np.concatenate([np.expand_dims(np.ravel(argmax_row), 1),
+                                      np.expand_dims(np.ravel(argmax_col), 1)], axis=1)
+
+    section_indexes[:, 0] += np.repeat(np.arange(0,
+                                                 input_data.shape[0],
+                                                 poolsize[0]),
+                                       input_data.shape[0] // poolsize[0])
+
+    section_indexes[:, 1] += np.tile(np.arange(0,
+                                               input_data.shape[1],
+                                               poolsize[1]),
+                                     input_data.shape[1] // poolsize[1])
+
+    return tf.Variable(section_indexes)
+
+
 def call(self, inputs, output_shape=None):
     updates, mask = inputs[0], inputs[1]
     with K.tf.variable_scope(self.name):
