@@ -4,6 +4,8 @@ import tensorflow as tf
 from keras.layers import MaxPool2D
 import numpy as np
 from skimage.measure import block_reduce
+from numpy.lib.stride_tricks import as_strided
+
 
 class MaxPoolingWithArgmax2D(MaxPool2D):
 
@@ -39,14 +41,6 @@ def unpooling2D(x, switches=None, poolsize=None):
     :return:
     """
 
-    """
-    if "argmax" not in kwargs or "poolsize":
-        raise ValueError("argmax is needed for unpooling layer")
-
-    argmax = kwargs['argmax']
-    poolsize = kwargs['poolsize']
-    """
-
     ordered_argmax = get_ordered_argmax(switches, poolsize)
 
     output_shape = tf.shape(x) * 2
@@ -55,10 +49,7 @@ def unpooling2D(x, switches=None, poolsize=None):
     return dense_output
 
 def unpooling2D_output_shape(input_shape):
-    print('Here: ', input_shape)
     return [input_shape * 2]
-
-
 
 
 
@@ -86,7 +77,6 @@ def get_ordered_argmax(argmax, poolsize):
                 else:
                     ordered_indices = K.concatenate([ordered_indices, argmax], axis=0)
 
-                print(i, j, chan)
     return ordered_indices
 
 
