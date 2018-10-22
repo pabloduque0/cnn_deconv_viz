@@ -2,6 +2,8 @@ from keras import backend as K
 from keras.engine.topology import Layer
 import tensorflow as tf
 from keras.layers import MaxPool2D
+import numpy as np
+from skimage.measure import block_reduce
 
 class MaxPoolingWithArgmax2D(MaxPool2D):
 
@@ -16,7 +18,7 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
         argmax = tf.not_equal(argmax[0], zero)
         argmax = tf.where(argmax)
 
-        return [output, argmax[0]]
+        return [output, argmax]
 
     def build(self, input_shape):
         return super(MaxPoolingWithArgmax2D, self).build(input_shape)
@@ -26,13 +28,99 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
         argmax_shape = input_shape
         return [pooling_shape, argmax_shape]
 
-def unpooling2D(x, **kwargs):
+def unpooling2D(x, switches=None, poolsize=None):
 
-    if 'argmax' not in kwargs:
-        raise ValueError('argmax is needed for unpooling layer')
+    """
+    2D unpooling with switches. This funciton assumes stride_size == pool_size
+
+    :param x:
+    :param switches:
+    :param poolsize:
+    :return:
+    """
+
+    """
+    if "argmax" not in kwargs or "poolsize":
+        raise ValueError("argmax is needed for unpooling layer")
 
     argmax = kwargs['argmax']
-    output_shape = list(K.int_shape(x))
+    poolsize = kwargs['poolsize']
+    """
+
+    ordered_argmax = get_ordered_argmax(switches, poolsize)
+
+    output_shape = tf.shape(x) * 2
+    dense_output = tf.sparse_to_dense(ordered_argmax, output_shape, K.flatten(x))
+
+    return dense_output
+
+def unpooling2D_output_shape(input_shape):
+    print('Here: ', input_shape)
+    return [input_shape * 2]
+
+
+
+
+
+def get_ordered_argmax(argmax, poolsize):
+
+    _, rows, columns, channels = K.int_shape(argmax)
+
+    ordered_indices = None
+    for chan in range(channels):
+        for i in range(0, rows, poolsize[0]):
+            for j in range(0, columns, poolsize[1]):
+                pool_section = argmax[i:i + poolsize[0], j:j + poolsize[1]]
+
+                flat_argmax = tf.cast(tf.argmax(K.flatten(pool_section)), tf.int32)
+
+                # convert indexes into 2D coordinates
+                argmax_row = flat_argmax // tf.shape(pool_section)[1] + i
+                argmax_col = flat_argmax % tf.shape(pool_section)[1] + j
+
+                # stack and return 2D coordinates
+                argmax = tf.Variable([tf.stack([argmax_row, argmax_col], axis=0)])
+
+                if ordered_indices is None:
+                    ordered_indices = argmax
+                else:
+                    ordered_indices = K.concatenate([ordered_indices, argmax], axis=0)
+
+                print(i, j, chan)
+    return ordered_indices
+
+
+def call(self, inputs, output_shape=None):
+    updates, mask = inputs[0], inputs[1]
+    with K.tf.variable_scope(self.name):
+        mask = K.cast(mask, 'int32')
+        input_shape = K.tf.shape(updates, out_type='int32')
+        #  calculation new shape
+        if output_shape is None:
+            output_shape = (
+            input_shape[0], input_shape[1] * self.size[0], input_shape[2] * self.size[1], input_shape[3])
+        self.output_shape1 = output_shape
+
+        # calculation indices for batch, height, width and feature maps
+        one_like_mask = K.ones_like(mask, dtype='int32')
+        batch_shape = K.concatenate([[input_shape[0]], [1], [1], [1]], axis=0)
+        batch_range = K.reshape(K.tf.range(output_shape[0], dtype='int32'), shape=batch_shape)
+        b = one_like_mask * batch_range
+        y = mask // (output_shape[2] * output_shape[3])
+        x = (mask // output_shape[3]) % output_shape[2]
+        feature_range = K.tf.range(output_shape[3], dtype='int32')
+        f = one_like_mask * feature_range
+
+        # transpose indices & reshape update values to one dimension
+        updates_size = K.tf.size(updates)
+        indices = K.transpose(K.reshape(K.stack([b, y, x, f]), [4, updates_size]))
+        values = K.reshape(updates, [updates_size])
+        ret = K.tf.scatter_nd(indices, values, output_shape)
+        return ret
+
+
+"""
+output_shape = list(K.int_shape(x))
     output_shape[1] *= 2
     output_shape[2] *= 2
     output = K.zeros(tuple(output_shape[1:]))
@@ -65,47 +153,4 @@ def unpooling2D(x, **kwargs):
     delta = tf.SparseTensor(indices, values, tf.to_int64(K.shape(output)))
     final_output = K.expand_dims(tf.sparse_tensor_to_dense(tf.sparse_reorder(delta)), 0)
 
-    return final_output
-
-
-def get_ordered_argmax(argmax, poolsize):
-
-    if len(argmax.shape) != 3:
-        raise ValueError('get_ordered_armax expects a tf.squeezed tensor input')
-
-    rows, columns, channels = K.int_shape(argmax)
-    for chan in channels:
-        for i, j in zip(range(0, rows, poolsize[0]), range(0, columns, poolsize[1])):
-            pass
-
-
-
-
-
-def call(self, inputs, output_shape=None):
-    updates, mask = inputs[0], inputs[1]
-    with K.tf.variable_scope(self.name):
-        mask = K.cast(mask, 'int32')
-        input_shape = K.tf.shape(updates, out_type='int32')
-        #  calculation new shape
-        if output_shape is None:
-            output_shape = (
-            input_shape[0], input_shape[1] * self.size[0], input_shape[2] * self.size[1], input_shape[3])
-        self.output_shape1 = output_shape
-
-        # calculation indices for batch, height, width and feature maps
-        one_like_mask = K.ones_like(mask, dtype='int32')
-        batch_shape = K.concatenate([[input_shape[0]], [1], [1], [1]], axis=0)
-        batch_range = K.reshape(K.tf.range(output_shape[0], dtype='int32'), shape=batch_shape)
-        b = one_like_mask * batch_range
-        y = mask // (output_shape[2] * output_shape[3])
-        x = (mask // output_shape[3]) % output_shape[2]
-        feature_range = K.tf.range(output_shape[3], dtype='int32')
-        f = one_like_mask * feature_range
-
-        # transpose indices & reshape update values to one dimension
-        updates_size = K.tf.size(updates)
-        indices = K.transpose(K.reshape(K.stack([b, y, x, f]), [4, updates_size]))
-        values = K.reshape(updates, [updates_size])
-        ret = K.tf.scatter_nd(indices, values, output_shape)
-        return ret
+"""
