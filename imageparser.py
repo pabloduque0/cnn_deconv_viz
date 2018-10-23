@@ -49,7 +49,6 @@ class ImageParser():
                 filepath = root + '/' + file
                 if file == 'wmh.nii':
                     data_and_labels.append(filepath)
-                    print('here yes')
 
                 if '/pre/' in filepath and (file == 'brain_FLAIR.nii' or file == 'brain_T1.nii') and len(
                         data_and_labels) in (1, 2):
