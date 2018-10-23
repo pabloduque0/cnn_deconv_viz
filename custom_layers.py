@@ -14,13 +14,13 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
 
     def call(self, inputs, **kwargs):
         output = super(MaxPoolingWithArgmax2D, self).call(inputs)
-        argmax = K.gradients(K.sum(output), inputs)
+        sum_grads = K.gradients(K.sum(output), inputs)
 
         zero = tf.constant(0, dtype=tf.float32)
-        argmax = tf.not_equal(argmax[0], zero)
-        argmax = tf.where(argmax)
+        argmax = tf.not_equal(sum_grads[0], zero)
+        argmax_mask = tf.cast(argmax, tf.float32)
 
-        return [output, argmax]
+        return [output, argmax_mask]
 
     def build(self, input_shape):
         return super(MaxPoolingWithArgmax2D, self).build(input_shape)
@@ -30,23 +30,17 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
         argmax_shape = input_shape
         return [pooling_shape, argmax_shape]
 
-def unpooling2D(x, switches=None, poolsize=None):
+def unpoolingMask2D(x, switches_mask=None):
 
     """
-    2D unpooling with switches. This funciton assumes stride_size == pool_size
-
-    :param x:
-    :param switches:
-    :param poolsize:
-    :return:
-    """
-
     ordered_argmax = get_ordered_argmax(switches, poolsize)
 
     output_shape = tf.shape(x) * 2
     dense_output = tf.sparse_to_dense(ordered_argmax, output_shape, K.flatten(x))
+    """
+    unpooled_layer = x * switches_mask
 
-    return dense_output
+    return unpooled_layer
 
 def unpooling2D_output_shape(input_shape):
     return [input_shape * 2]
@@ -114,6 +108,28 @@ def get_ordered_argmax_fast(input_data, poolsize):
                                      input_data.shape[1] // poolsize[1])
 
     return tf.Variable(section_indexes)
+
+def get_ordered_argmax_mid(input_data, poolsize):
+
+    data_blocks_rows = tf.split(input_data, poolsize, 0)
+
+    ordered_indices = None
+    for block in data_blocks:
+
+        flat_argmax = tf.cast(tf.argmax(K.flatten(block)), tf.int32)
+
+        # convert indexes into 2D coordinates
+        argmax_row = flat_argmax // tf.shape(pool_section)[1] + i
+        argmax_col = flat_argmax % tf.shape(pool_section)[1] + j
+
+        # stack and return 2D coordinates
+        argmax = tf.Variable([tf.stack([argmax_row, argmax_col], axis=0)])
+
+        if ordered_indices is None:
+            ordered_indices = argmax
+        else:
+            ordered_indices = K.concatenate([ordered_indices, argmax], axis=0)
+
 
 
 def call(self, inputs, output_shape=None):
