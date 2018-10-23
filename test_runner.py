@@ -10,6 +10,8 @@ from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_
 import custom_layers
 from imageparser import ImageParser
 import numpy as np
+import keras.backend as K
+
 
 parser = ImageParser()
 utrech_dataset, _, _ = parser.get_all_images_and_labels()
@@ -30,25 +32,29 @@ utrecht_resized_flairs = parser.resize_slices(utrecht_data_flair, slice_shape)
 utrecht_normalized_flairs = parser.normalize_images(utrecht_resized_flairs)
 utrecht_normalized_flairs = np.expand_dims(np.asanyarray(utrecht_normalized_flairs), 3)
 
-print(utrecht_normalized_t1.shape, utrecht_normalized_flairs.shape)
+print("T1 and FLAIR shapes: ", utrecht_normalized_t1.shape, utrecht_normalized_flairs.shape)
 
 all_data = np.concatenate([utrecht_normalized_t1, utrecht_normalized_flairs], axis=3)
-print(all_data.shape)
+print("Data shape: ", all_data.shape)
 
 inputs = layers.Input(shape=all_data.shape[1:])
 conv1 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(inputs)
 conv2 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
-output, switches = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv2)
-unpooling1 = layers.Lambda(custom_layers.unpooling2D,
-                           output_shape=custom_layers.unpooling2D_output_shape,
-                           arguments={"switches": switches, "poolsize": (2, 2)})(output)
+pooling1, switches_mask = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv2)
 
+upsampling1 = layers.UpSampling2D(size=(2, 2))(pooling1)
+unpooling1 = layers.multiply([upsampling1, switches_mask])
 conv_trans1 = layers.Conv2DTranspose(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(unpooling1)
 conv_trans2 = layers.Conv2DTranspose(1, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv_trans1)
 
 
 model = models.Model(inputs=[inputs], outputs=[conv_trans2])
 
-model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, weighted_crossentropy,
-                                                                                   predicted_count, predicted_sum, ground_truth_count,
+model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef,
+                                                                         weighted_crossentropy,
+                                                                         predicted_count,
+                                                                         predicted_sum,
+                                                                         ground_truth_count,
                                                                                  ground_truth_sum])
+
+model.summary()
