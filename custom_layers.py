@@ -1,11 +1,10 @@
 from keras import backend as K
 from keras.engine.topology import Layer
 import tensorflow as tf
-from keras.layers import MaxPool2D
+from keras.layers import MaxPool2D, UpSampling2D
 import numpy as np
 from skimage.measure import block_reduce
 from numpy.lib.stride_tricks import as_strided
-
 
 class MaxPoolingWithArgmax2D(MaxPool2D):
 
@@ -30,20 +29,43 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
         argmax_shape = input_shape
         return [pooling_shape, argmax_shape]
 
-def unpoolingMask2D(x, switches_mask=None):
+class UnpoolingWithArgs()
+
+def unpoolingMask2D(x, poolsize):
 
     """
-    ordered_argmax = get_ordered_argmax(switches, poolsize)
-
-    output_shape = tf.shape(x) * 2
-    dense_output = tf.sparse_to_dense(ordered_argmax, output_shape, K.flatten(x))
+    Channels last only
+    :param x:
+    :param poolsize:
+    :return:
     """
-    unpooled_layer = x * switches_mask
+
+    unpooled_layer = K.repeat_elements(x, poolsize[0], axis=1)
+    unpooled_layer = K.repeat_elements(unpooled_layer, poolsize[1], axis=2)
 
     return unpooled_layer
 
-def unpooling2D_output_shape(input_shape):
-    return [input_shape * 2]
+def unpoolingMask2D_output_shape(input_shape):
+
+    """
+    Channels last only. (2, 2) unpooling only
+    :param input_shape:
+    :param poolsize:
+    :return:
+    """
+    output_shape = [*input_shape]
+
+    print("Pre: ", output_shape)
+    if len(output_shape) == 3:
+        output_shape[0] *= 2
+        output_shape[1] *= 2
+    elif len(output_shape) == 4:
+        output_shape[1] *= 2
+        output_shape[2] *= 2
+
+    print("Pos: ", output_shape)
+    print("Final: ", [tuple(output_shape)])
+    return [tuple(output_shape)]
 
 
 
