@@ -6,7 +6,8 @@ from keras.callbacks import ModelCheckpoint, TensorBoard
 from sklearn.model_selection import train_test_split
 from keras.models import load_model
 from keras.optimizers import Adam, SGD
-from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, ground_truth_count, ground_truth_sum, predicted_sum
+from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, \
+    predicted_count, ground_truth_count, ground_truth_sum, predicted_sum
 import custom_layers
 from imageparser import ImageParser
 import numpy as np
@@ -38,14 +39,21 @@ all_data = np.concatenate([utrecht_normalized_t1, utrecht_normalized_flairs], ax
 print("Data shape: ", all_data.shape)
 
 inputs = layers.Input(shape=all_data.shape[1:])
-conv1 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(inputs)
-conv2 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
+conv1 = layers.Conv2D(64, kernel_size=5, padding='same',
+                      kernel_initializer='he_normal', activation='relu')(inputs)
+conv2 = layers.Conv2D(64, kernel_size=5, padding='same',
+                      kernel_initializer='he_normal', activation='relu')(conv1)
+
 pooling1, switches_mask = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv2)
 
-upsampling1 = layers.UpSampling2D(size=(2, 2))(pooling1)
-unpooling1 = layers.multiply([upsampling1, switches_mask])
-conv_trans1 = layers.Conv2DTranspose(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(unpooling1)
-conv_trans2 = layers.Conv2DTranspose(1, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv_trans1)
+unpooled1 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                            arguments={"poolsize": (2, 2), "argmax": switches_mask},
+                            output_shape=custom_layers.unpoolingMask2D_output_shape)(pooling1)
+
+conv_trans1 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
+                                     kernel_initializer='he_normal', activation='relu')(unpooled1)
+conv_trans2 = layers.Conv2DTranspose(1, kernel_size=5, padding='same',
+                                     kernel_initializer='he_normal', activation='relu')(conv_trans1)
 
 
 model = models.Model(inputs=[inputs], outputs=[conv_trans2])
