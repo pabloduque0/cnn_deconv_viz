@@ -1,7 +1,7 @@
 from keras import backend as K
 from keras.engine.topology import Layer
 import tensorflow as tf
-from keras.layers import MaxPool2D, UpSampling2D
+from keras.layers import MaxPool2D, UpSampling2D, Layer
 import numpy as np
 from skimage.measure import block_reduce
 from numpy.lib.stride_tricks import as_strided
@@ -11,7 +11,7 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
     def __init__(self, **kwargs):
         super(MaxPoolingWithArgmax2D, self).__init__(**kwargs)
 
-    def call(self, inputs, **kwargs):
+    def call(self, inputs):
         output = super(MaxPoolingWithArgmax2D, self).call(inputs)
         sum_grads = K.gradients(K.sum(output), inputs)
 
@@ -29,9 +29,8 @@ class MaxPoolingWithArgmax2D(MaxPool2D):
         argmax_shape = input_shape
         return [pooling_shape, argmax_shape]
 
-class UnpoolingWithArgs()
 
-def unpoolingMask2D(x, poolsize):
+def unpooling_with_argmax2D(x, poolsize, argmax):
 
     """
     Channels last only
@@ -43,7 +42,9 @@ def unpoolingMask2D(x, poolsize):
     unpooled_layer = K.repeat_elements(x, poolsize[0], axis=1)
     unpooled_layer = K.repeat_elements(unpooled_layer, poolsize[1], axis=2)
 
-    return unpooled_layer
+    unpooled_with_values = unpooled_layer * argmax
+
+    return unpooled_with_values
 
 def unpoolingMask2D_output_shape(input_shape):
 
@@ -55,7 +56,6 @@ def unpoolingMask2D_output_shape(input_shape):
     """
     output_shape = [*input_shape]
 
-    print("Pre: ", output_shape)
     if len(output_shape) == 3:
         output_shape[0] *= 2
         output_shape[1] *= 2
@@ -63,8 +63,6 @@ def unpoolingMask2D_output_shape(input_shape):
         output_shape[1] *= 2
         output_shape[2] *= 2
 
-    print("Pos: ", output_shape)
-    print("Final: ", [tuple(output_shape)])
     return [tuple(output_shape)]
 
 
