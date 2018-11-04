@@ -7,6 +7,8 @@
 
 import numpy as np
 import scipy.ndimage as ndi
+import gc
+import psutil
 
 
 class ImageAugmentator():
@@ -30,9 +32,13 @@ class ImageAugmentator():
         rotation_slice_x = dataset_x[half_indexes]
         rotation_slice_y = dataset_y_copy[half_indexes]
         rotated_xs, rotated_ys = self.perform_rotations(rotation_slice_x, rotation_slice_y, 10)
+        del rotation_slice_x, rotation_slice_y, half_indexes
+        gc.collect()
+        print(psutil.Process().memory_info().rss / 2**30)
         aug_dataset_x = np.concatenate([dataset_x, rotated_xs], axis=0)
         rotated_ys = np.expand_dims(np.asanyarray(rotated_ys)[:, :, :, 0], axis=3)
         aug_dataset_y = np.concatenate([dataset_y, rotated_ys], axis=0)
+        gc.collect()
 
         # Shifts
         shift_slice_x = dataset_x[other_half_indexes]
@@ -40,6 +46,8 @@ class ImageAugmentator():
         shift_xs, shift_ys = self.perform_shifts(shift_slice_x, shift_slice_y, 0.3, 0.3)
         aug_dataset_x = np.concatenate([aug_dataset_x, shift_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, shift_ys], axis=0)
+        del shift_xs, shift_ys, other_half_indexes
+        gc.collect()
 
         return aug_dataset_x, aug_dataset_y
 
