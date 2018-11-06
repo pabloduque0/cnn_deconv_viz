@@ -10,20 +10,30 @@ from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_
 from keras.losses import binary_crossentropy
 import cv2
 import numpy as np
-from keras import activations
+import custom_layers
+import keras.backend as K
+import math
+import pickle
+import gc
+import psutil
 
 class UnetDeconv():
 
-    def __init__(self, model_path=None, img_shape=None):
+    def __init__(self, model_paths=None, img_shape=None):
 
-        if model_path is None:
+        if model_paths is None:
             if img_shape is None:
-                raise Exception('If no model path is provided img shape is a mandatory argument.')
-            model = self.create_model(img_shape)
+                raise ValueError('If no model path is provided img shape is a mandatory argument.')
+            model, deconv_model = self.create_model(img_shape)
+        elif (isinstance(model_paths, tuple) or isinstance(model_paths, list)) and len(model_paths) == 2:
+            model = load_model(model_paths[0])
+            deconv_model = load_model(model_paths[1])
         else:
-            model = load_model(model_path)
+            raise ValueError("model_paths must be an array_like with len = 2, containing both paths for model"
+                             "and deconv model.")
 
         self.model = model
+        self.deconv_model = deconv_model
 
 
     def create_model(self, img_shape):
@@ -294,3 +304,10 @@ class UnetDeconv():
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
 
 
+    def visualize_activations(self, data, labels, output_path, batch_size=1):
+
+        predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
+
+        print("Predictions deconv shape", predictions.shape)
+        for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
+            cv2.imwrite(output_path + 'deconv_activations_layer_4' + '.png', label * 255)
