@@ -34,66 +34,99 @@ class UnetDeconv():
 
         conv1 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(inputs)
         conv2 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
-        maxpool1 = layers.MaxPool2D(pool_size=(2, 2))(conv2)
+        maxpool1, switches_mask1 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv2)
 
         conv3 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool1)
         conv4 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv3)
-        maxpool2 = layers.MaxPool2D(pool_size=(2, 2))(conv4)
+        maxpool2, switches_mask2 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv4)
 
         conv5 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool2)
         conv6 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv5)
-        maxpool3 = layers.MaxPool2D(pool_size=(2, 2))(conv6)
+        maxpool3, switches_mask3 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv6)
 
         conv7 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool3)
         conv8 = layers.Conv2D(256, kernel_size=4, padding='same', kernel_initializer='he_normal', activation='relu')(conv7)
-        maxpool4 = layers.MaxPool2D(pool_size=(2, 2))(conv8)
+        maxpool4, switches_mask4 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv8)
 
         conv9 = layers.Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool4)
         conv10 = layers.Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv9)
 
         up_conv10 = layers.UpSampling2D(size=(2, 2))(conv10)
         up_samp1 = layers.concatenate([conv8, up_conv10], axis=concat_axis)
-        #conv11 = layers.Conv2D(512, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp1)
 
         conv12 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp1)
         conv13 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv12)
 
         up_conv13 = layers.UpSampling2D(size=(2, 2))(conv13)
         up_samp2 = layers.concatenate([conv6, up_conv13], axis=concat_axis)
-        #conv14 = layers.Conv2D(256, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp2)
 
         conv15 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp2)
         conv16 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv15)
 
         up_conv16 = layers.UpSampling2D(size=(2, 2))(conv16)
         up_samp3 = layers.concatenate([conv4, up_conv16], axis=concat_axis)
-        #conv17 = layers.Conv2D(128, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp3)
 
         conv18 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp3)
         conv19 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv18)
 
         up_conv19 = layers.UpSampling2D(size=(2, 2))(conv19)
         up_samp4 = layers.concatenate([conv2, up_conv19], axis=concat_axis)
-        #conv20 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp4)
 
         conv21 = layers.Conv2D(64, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp4)
         conv22 = layers.Conv2D(64, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv21)
 
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='sigmoid')(conv22)
 
-        deconv_1 = layers.Conv2DTranspose(1, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
-        deconv_0 = layers.multiply([deconv_1, inputs])
+        deconv_10 = layers.Conv2DTranspose(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='relu')(conv10)
+        deconv_09 = layers.Conv2DTranspose(64, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(deconv_10)
+
+        unpool_04 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                            arguments={"poolsize": (2, 2), "argmax": switches_mask4},
+                            output_shape=custom_layers.unpoolingMask2D_output_shape)(deconv_09)
+
+        deconv_08 = layers.Conv2DTranspose(1, kernel_size=1, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(unpool_04)
+        deconv_07 = layers.Conv2DTranspose(64, kernel_size=3, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(deconv_08)
+
+        unpool_03 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                  arguments={"poolsize": (2, 2), "argmax": switches_mask3},
+                                  output_shape=custom_layers.unpoolingMask2D_output_shape)(deconv_07)
+
+        deconv_06 = layers.Conv2DTranspose(1, kernel_size=1, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(unpool_03)
+        deconv_05 = layers.Conv2DTranspose(64, kernel_size=3, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(deconv_06)
+
+        unpool_02 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                  arguments={"poolsize": (2, 2), "argmax": switches_mask2},
+                                  output_shape=custom_layers.unpoolingMask2D_output_shape)(deconv_05)
+
+        deconv_04 = layers.Conv2DTranspose(1, kernel_size=1, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(unpool_02)
+        deconv_03 = layers.Conv2DTranspose(64, kernel_size=3, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(deconv_04)
+
+        unpool_01 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                  arguments={"poolsize": (2, 2), "argmax": switches_mask1},
+                                  output_shape=custom_layers.unpoolingMask2D_output_shape)(deconv_03)
+
+        deconv_02 = layers.Conv2DTranspose(1, kernel_size=1, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(unpool_01)
+        deconv_01 = layers.Conv2DTranspose(64, kernel_size=3, padding='same', kernel_initializer='he_normal',
+                                           activation='relu')(deconv_02)
+
 
         model = models.Model(inputs=inputs, outputs=conv23)
 
-        deconv_model = models.Model(inputs=inputs, outputs=[])
+        deconv_model = models.Model(inputs=inputs, outputs=deconv_01)
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
                                                                                  ground_truth_sum])
         model.summary()
 
-        return model
+        return model, deconv_model
 
 
     def save_specs(self, specs_path, fit_specs):
@@ -152,6 +185,9 @@ class UnetDeconv():
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
                                                             test_size=test_size)
+
+        del X, y
+        gc.collect()
 
         fit_specs = {
             'epochs': epochs,
