@@ -206,6 +206,77 @@ class UnetDeconv():
                        verbose=1)
 
 
+    def train_with_generator(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
+
+        paths = self.create_folders(training_name, base_path)
+
+        checkpointer = ModelCheckpoint(filepath=paths["weights_path"],
+                                       save_best_only=True,
+                                       verbose=1)
+
+        tensorboard_callback = TensorBoard(log_dir=paths["log_path"],
+                                           batch_size=batch_size,
+                                           write_graph=False,
+                                           write_grads=False,
+                                           write_images=False,
+                                           embeddings_freq=0,
+                                           embeddings_layer_names=None,
+                                           embeddings_metadata=None)
+
+        fit_specs = {
+            'epochs': epochs,
+            'batch_size': batch_size,
+            'test_size': test_size
+
+        }
+        self.save_specs(paths['specs_path'], fit_specs)
+
+        X_train, X_test, y_train, y_test = train_test_split(X,
+                                                            y,
+                                                            test_size=test_size)
+
+        del X, y
+        gc.collect()
+        print(psutil.Process().memory_info().rss / 2 ** 30)
+
+
+        number_batches = self.save_batch_files(X_train, y_train, base_path, batch_size, "train")
+        _ = self.save_batch_files(X_test, y_test, base_path, batch_size, "test")
+
+
+        self.model.fit_generator(self.train_generator(base_path, number_batches, "train"),
+                       callbacks=[checkpointer, tensorboard_callback],
+                       epochs=epochs,
+                       validation_data=self.train_generator(base_path, number_batches, "test"),
+                       verbose=1)
+
+
+    def save_batch_files(self, data, labels, base_path, batch_size, _type):
+
+        data_output_path = base_path + "/data_batches_" + _type + "/"
+        if not os.path.exists(data_output_path):
+            os.makedirs(data_output_path)
+
+        _range = math.ceil(data.shape[0]/batch_size)
+        counter = 0
+        for id in range(_range):
+            tuple_to_save = (data[:, :, :, counter:counter+batch_size], labels[:, :, :, counter:counter+batch_size])
+            file_name = data_output_path + "data_and_labels_" + str(id) + ".pk"
+            pickle.dump(tuple_to_save, open(file_name, "wb"))
+            del tuple_to_save
+            gc.collect()
+
+        return _range
+
+
+    def train_generator(self, base_path, number_batches, _type):
+
+        for id in range(number_batches):
+            file_name = base_path + "/data_batches_" + _type + "/" + "data_and_labels_" + str(id) + ".pk"
+            loaded_tuple = pickle.load(open(file_name, "rb"))
+            yield loaded_tuple
+
+
     def predict_and_save(self, data, labels, output_path, batch_size=1):
 
         if not output_path.endswith('/'):
