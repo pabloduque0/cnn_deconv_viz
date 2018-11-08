@@ -34,7 +34,6 @@ class ImageAugmentator():
         rotated_xs, rotated_ys = self.perform_rotations(rotation_slice_x, rotation_slice_y, 10)
         del rotation_slice_x, rotation_slice_y, half_indexes
         gc.collect()
-        print(psutil.Process().memory_info().rss / 2**30)
         aug_dataset_x = np.concatenate([dataset_x, rotated_xs], axis=0)
         rotated_ys = np.expand_dims(np.asanyarray(rotated_ys)[:, :, :, 0], axis=3)
         aug_dataset_y = np.concatenate([dataset_y, rotated_ys], axis=0)
