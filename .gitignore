@@ -5,3 +5,4 @@ output/*
 *.nii
 *.pyc
 *.hdf5
+*.pk
