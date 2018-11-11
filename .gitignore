@@ -6,3 +6,4 @@ output/*
 *.pyc
 *.hdf5
 *.pk
+*.png
