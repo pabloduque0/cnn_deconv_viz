@@ -17,6 +17,7 @@ import pickle
 import gc
 import psutil
 
+
 class UnetDeconv():
 
     def __init__(self, model_paths=None, img_shape=None):
@@ -125,7 +126,6 @@ class UnetDeconv():
                                            activation='relu')(unpool_01)
         deconv_01 = layers.Conv2DTranspose(64, kernel_size=3, padding='same', kernel_initializer='he_normal',
                                            activation='relu')(deconv_02)
-
 
         model = models.Model(inputs=inputs, outputs=conv23)
 
@@ -253,10 +253,16 @@ class UnetDeconv():
         number_batches = self.save_batch_files(X_train, y_train, base_path, batch_size, "train")
         _ = self.save_batch_files(X_test, y_test, base_path, batch_size, "test")
 
+        del X_train, y_train, X_test, y_test
+        gc.collect()
+        print("Pre fit_generator: ", psutil.Process().memory_info().rss / 2 ** 30)
+
 
         self.model.fit_generator(self.train_generator(base_path, number_batches, "train"),
+                       steps_per_epoch=1,
                        callbacks=[checkpointer, tensorboard_callback],
                        epochs=epochs,
+                       validation_steps=1,
                        validation_data=self.train_generator(base_path, number_batches, "test"),
                        verbose=1)
 
@@ -298,7 +304,6 @@ class UnetDeconv():
         predictions = self.model.predict(data, batch_size=batch_size, verbose=1)
 
         for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-            print(len(np.flatnonzero(pred)))
             cv2.imwrite(output_path + 'original_' + str(index) + '.png', original * 255)
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
@@ -306,8 +311,18 @@ class UnetDeconv():
 
     def visualize_activations(self, data, labels, output_path, batch_size=1):
 
+        if not output_path.endswith('/'):
+            output_path += '/'
+
+        if not os.path.exists(output_path):
+            os.makedirs(output_path)
+
         predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
 
         print("Predictions deconv shape", predictions.shape)
         for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-            cv2.imwrite(output_path + 'deconv_activations_layer_4' + '.png', label * 255)
+            cv2.imwrite(output_path + str(index) + '_original_deconv_activations_layer_4' + '.png', original * 255)
+            cv2.imwrite(output_path + str(index) + '_label_deconv_activations_layer_4' + '.png', label * 255)
+            for channel in range(predictions.shape[-1]):
+                file_name = output_path + str(index) + '_label_deconv_activations_layer_4_' + "chan_" + str(channel) + '.png'
+                cv2.imwrite(file_name, pred[:, :, channel] * 255)
