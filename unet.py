@@ -21,8 +21,16 @@ from basenetwork import BaseNetwork
 
 class Unet(BaseNetwork):
 
-    def __init__(self):
-        super().__init__(model_paths=None, img_shape=None))
+    def __init__(self,  model_path=None, img_shape=None):
+
+        if model_path is None:
+            if img_shape is None:
+                raise Exception('If no model path is provided img shape is a mandatory argument.')
+            model = self.create_model(img_shape)
+        else:
+            model = load_model(model_path)
+
+        super().__init__(model)
 
     def create_model(self, img_shape):
 
