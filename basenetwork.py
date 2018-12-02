@@ -21,9 +21,9 @@ import progressbar
 
 class BaseNetwork():
 
-    def __init__(self, model_paths=None, img_shape=None):
-
-        raise NotImplementedError
+    def __init__(self, model):
+        self.model = model
+        self.full_paths_dict = None
 
 
     def save_specs(self, specs_path, fit_specs):
@@ -38,7 +38,9 @@ class BaseNetwork():
             for key, value in fit_specs.items():
                 fit_file.write(key + ': ' + str(value) + '\n')
 
-    def create_folders(self, training_name, base_path, out_path=False, viz_path=False):
+    def create_folders(self, training_name, base_path, output_path_flag=True, viz_path_flag=False):
+
+        full_paths_dict = {}
 
         model_path = base_path + "/models/" + training_name
         if not os.path.exists(model_path):
@@ -53,24 +55,40 @@ class BaseNetwork():
                 v = 1
             weights_path = model_path + "/model_{}.hdf5".format(v)
 
+        full_paths_dict["weights_path"] = weights_path
+
         log_path = base_path + "/logs/" + training_name + '/'
         if not os.path.exists(log_path):
             os.makedirs(log_path)
+        full_paths_dict["log_path"] = log_path
 
         specs_path = log_path + "/specs_{}.txt".format(v)
+        full_paths_dict["specs_path"] = specs_path
 
-        return {"log_path": log_path, "weights_path": weights_path,
-                "specs_path": specs_path}
+        if output_path_flag:
+            output_path = base_path + "/output/" + training_name + '/'
+            if not os.path.exists(output_path):
+                os.makedirs(output_path)
+            full_paths_dict["output_path"] = output_path
+
+        if viz_path_flag:
+            viz_path = base_path + "/viz_output/" + training_name + '/'
+            if not os.path.exists(viz_path):
+                os.makedirs(viz_path)
+            full_paths_dict["viz_path"] = viz_path
+
+        self.full_paths_dict = full_paths_dict
+
 
     def train(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
 
-        paths = self.create_folders(training_name, base_path)
+        self.create_folders(training_name, base_path)
 
-        checkpointer = ModelCheckpoint(filepath=paths["weights_path"],
+        checkpointer = ModelCheckpoint(filepath=self.full_paths_dict["weights_path"],
                                        save_best_only=True,
                                        verbose=1)
 
-        tensorboard_callback = TensorBoard(log_dir=paths["log_path"],
+        tensorboard_callback = TensorBoard(log_dir=self.full_paths_dict["log_path"],
                                            batch_size=batch_size,
                                            write_graph=False,
                                            write_grads=False,
@@ -92,7 +110,7 @@ class BaseNetwork():
             'test_size': test_size
 
         }
-        self.save_specs(paths['specs_path'], fit_specs)
+        self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
 
         self.model.fit(X_train, y_train,
@@ -105,13 +123,13 @@ class BaseNetwork():
 
     def train_with_generator(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
 
-        paths = self.create_folders(training_name, base_path)
+        self.create_folders(training_name, base_path)
 
-        checkpointer = ModelCheckpoint(filepath=paths["weights_path"],
+        checkpointer = ModelCheckpoint(filepath=self.full_paths_dict["weights_path"],
                                        save_best_only=True,
                                        verbose=1)
 
-        tensorboard_callback = TensorBoard(log_dir=paths["log_path"],
+        tensorboard_callback = TensorBoard(log_dir=self.full_paths_dict["log_path"],
                                            batch_size=batch_size,
                                            write_graph=False,
                                            write_grads=False,
@@ -126,7 +144,7 @@ class BaseNetwork():
             'test_size': test_size
 
         }
-        self.save_specs(paths['specs_path'], fit_specs)
+        self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
@@ -181,13 +199,9 @@ class BaseNetwork():
             yield loaded_tuple
 
 
-    def predict_and_save(self, data, labels, output_path, batch_size=1):
+    def predict_and_save(self, data, labels, batch_size=1):
 
-        if not output_path.endswith('/'):
-            output_path += '/'
-
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+        output_path = self.full_paths_dict['output_path']
 
         predictions = self.model.predict(data, batch_size=batch_size, verbose=1)
 
@@ -196,12 +210,3 @@ class BaseNetwork():
             cv2.imwrite(output_path + 'original_' + str(index) + '.png', original * 255)
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
-
-
-    def visualize_activations(self, data, labels, output_path, batch_size=1):
-
-        predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
-
-        print("Predictions deconv shape", predictions.shape)
-        for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-            cv2.imwrite(output_path + 'deconv_activations_layer_4' + '.png', label * 255)
