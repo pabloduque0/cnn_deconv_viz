@@ -17,9 +17,9 @@ import pickle
 import gc
 import psutil
 import tensorflow as tf
+from basenetwork import BaseNetwork
 
-
-class UnetDeconv():
+class UnetDeconv(BaseNetwork):
 
     def __init__(self, model_paths=None, img_shape=None):
 
@@ -34,7 +34,7 @@ class UnetDeconv():
             raise ValueError("model_paths must be an array_like with len = 2, containing both paths for model"
                              "and deconv model.")
 
-        self.model = model
+        super().__init__(model)
         self.deconv_model = deconv_model
 
 
@@ -140,51 +140,15 @@ class UnetDeconv():
         return model, deconv_model
 
 
-    def save_specs(self, specs_path, fit_specs):
-
-        with open(specs_path, 'w') as file:
-            with redirect_stdout(file):
-                self.model.summary()
-
-        fit_specs_file = specs_path[:-4] + 'fit_specs.txt'
-
-        with open(fit_specs_file, 'w') as fit_file:
-            for key, value in fit_specs.items():
-                fit_file.write(key + ': ' + str(value) + '\n')
-
-    def create_folders(self, training_name, base_path):
-
-        model_path = base_path + "/models/" + training_name
-        if not os.path.exists(model_path):
-            os.makedirs(model_path)
-
-        v = 0
-        weights_path = model_path + "/model_0.hdf5"
-        if os.path.exists(weights_path):
-            try:
-                v = int(weights_path.split("_")[-1].replace(".hdf5", "")) + 1
-            except ValueError:
-                v = 1
-            weights_path = model_path + "/model_{}.hdf5".format(v)
-
-        log_path = base_path + "/logs/" + training_name + '/'
-        if not os.path.exists(log_path):
-            os.makedirs(log_path)
-
-        specs_path = log_path + "/specs_{}.txt".format(v)
-
-        return {"log_path": log_path, "weights_path": weights_path,
-                "specs_path": specs_path}
-
     def train(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
 
-        paths = self.create_folders(training_name, base_path)
+        self.create_folders(training_name, base_path, viz_path_flag=True)
 
-        checkpointer = ModelCheckpoint(filepath=paths["weights_path"],
+        checkpointer = ModelCheckpoint(filepath=self.full_paths_dict["weights_path"],
                                        save_best_only=True,
                                        verbose=1)
 
-        tensorboard_callback = TensorBoard(log_dir=paths["log_path"],
+        tensorboard_callback = TensorBoard(log_dir=self.full_paths_dict["log_path"],
                                            batch_size=batch_size,
                                            write_graph=False,
                                            write_grads=False,
@@ -206,7 +170,7 @@ class UnetDeconv():
             'test_size': test_size
 
         }
-        self.save_specs(paths['specs_path'], fit_specs)
+        self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
 
         self.model.fit(X_train, y_train,
@@ -219,13 +183,13 @@ class UnetDeconv():
 
     def train_with_generator(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
 
-        paths = self.create_folders(training_name, base_path)
+        self.create_folders(training_name, base_path, viz_path_flag=True)
 
-        checkpointer = ModelCheckpoint(filepath=paths["weights_path"],
+        checkpointer = ModelCheckpoint(filepath=self.full_paths_dict["weights_path"],
                                        save_best_only=True,
                                        verbose=1)
 
-        tensorboard_callback = TensorBoard(log_dir=paths["log_path"],
+        tensorboard_callback = TensorBoard(log_dir=self.full_paths_dict["log_path"],
                                            batch_size=batch_size,
                                            write_graph=False,
                                            write_grads=False,
@@ -240,7 +204,7 @@ class UnetDeconv():
             'test_size': test_size
 
         }
-        self.save_specs(paths['specs_path'], fit_specs)
+        self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
@@ -268,55 +232,9 @@ class UnetDeconv():
                        verbose=1)
 
 
-    def save_batch_files(self, data, labels, base_path, batch_size, _type):
+    def visualize_activations(self, data, labels, batch_size=1):
 
-        data_output_path = base_path + "/data_batches_" + _type + "/"
-        if not os.path.exists(data_output_path):
-            os.makedirs(data_output_path)
-
-        _range = math.ceil(data.shape[0]/batch_size)
-        counter = 0
-        for id in range(_range):
-            tuple_to_save = (data[:, :, :, counter:counter+batch_size], labels[:, :, :, counter:counter+batch_size])
-            file_name = data_output_path + "data_and_labels_" + str(id) + ".pk"
-            pickle.dump(tuple_to_save, open(file_name, "wb"))
-            del tuple_to_save
-            gc.collect()
-
-        return _range
-
-
-    def train_generator(self, base_path, number_batches, _type):
-
-        for id in range(number_batches):
-            file_name = base_path + "/data_batches_" + _type + "/" + "data_and_labels_" + str(id) + ".pk"
-            loaded_tuple = pickle.load(open(file_name, "rb"))
-            yield loaded_tuple
-
-
-    def predict_and_save(self, data, labels, output_path, batch_size=1):
-
-        if not output_path.endswith('/'):
-            output_path += '/'
-
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
-
-        predictions = self.model.predict(data, batch_size=batch_size, verbose=1)
-
-        for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-            cv2.imwrite(output_path + 'original_' + str(index) + '.png', original * 255)
-            cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
-            cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
-
-
-    def visualize_activations(self, data, labels, output_path, batch_size=1):
-
-        if not output_path.endswith('/'):
-            output_path += '/'
-
-        if not os.path.exists(output_path):
-            os.makedirs(output_path)
+        output_path = self.full_paths_dict['output_path']
 
         predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
 
@@ -327,3 +245,4 @@ class UnetDeconv():
             for channel in range(predictions.shape[-1]):
                 file_name = output_path + str(index) + '_label_deconv_activations_layer_4_' + "chan_" + str(channel) + '.png'
                 cv2.imwrite(file_name, pred[:, :, channel] * 255)
+
