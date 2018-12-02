@@ -1,5 +1,6 @@
 import numpy as np
 from unetdeconv import UnetDeconv
+from unet import Unet
 from imageparser import ImageParser
 from imageaugmentator import ImageAugmentator
 from sklearn.model_selection import train_test_split
@@ -170,11 +171,9 @@ VALIDATING
 
 '''
 
-output_path = base_path + '/output/'
 validation_data = np.asanyarray(validation_data)
 validation_labels = np.asanyarray(validation_labels)
-
-unet.predict_and_save(validation_data, validation_labels, output_path)
+unet.predict_and_save(validation_data, validation_labels)
 
 """
 
@@ -182,4 +181,4 @@ VISUALIZING
 
 """
 
-unet.visualize_activations(data_train, labels_train, "/viz_output/", batch_size=30)
+#unet.visualize_activations(data_train, labels_train, batch_size=30)
