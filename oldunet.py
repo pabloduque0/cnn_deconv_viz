@@ -11,9 +11,9 @@ from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_
 from keras.losses import binary_crossentropy
 import cv2
 import numpy as np
+from basenetwork import BaseNetwork
 
-
-class OldUnet():
+class OldUnet(BaseNetwork):
 
     def __init__(self, model_path=None, img_shape=None):
 
