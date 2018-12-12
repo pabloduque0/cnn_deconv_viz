@@ -95,7 +95,7 @@ DATA CONCAT
 
 normalized_t1 = utrecht_normalized_t1 + singapore_normalized_t1 + amsterdam_normalized_t1
 normalized_flairs = utrecht_normalized_flairs + singapore_normalized_flairs + amsterdam_normalized_flairs
-data_tophat = utrecht_data_tophat + singapore_data_tophat + amsterdam_data_tophat
+#data_tophat = utrecht_data_tophat + singapore_data_tophat + amsterdam_data_tophat
 
 del utrecht_normalized_t1, singapore_normalized_t1, amsterdam_normalized_t1
 del utrecht_normalized_flairs, singapore_normalized_flairs, amsterdam_normalized_flairs
@@ -103,9 +103,9 @@ del utrecht_data_tophat, singapore_data_tophat, amsterdam_data_tophat
 
 data_t1 = np.expand_dims(np.asanyarray(normalized_t1), axis=3)
 data_flair = np.expand_dims(np.asanyarray(normalized_flairs), axis=3)
-data_tophat = np.asanyarray(data_tophat)
+#data_tophat = np.asanyarray(data_tophat)
 
-all_data = np.concatenate([data_t1, data_flair, data_tophat], axis=3)
+all_data = np.concatenate([data_t1, data_flair], axis=3)
 
 del data_t1
 del data_flair
