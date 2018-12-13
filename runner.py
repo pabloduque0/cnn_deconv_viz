@@ -1,6 +1,7 @@
 import numpy as np
 from unetdeconv import UnetDeconv
 from unet import Unet
+from oldunet import OldUnet
 from imageparser import ImageParser
 from imageaugmentator import ImageAugmentator
 from sklearn.model_selection import train_test_split

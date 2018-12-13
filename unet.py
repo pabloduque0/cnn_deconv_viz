@@ -58,7 +58,7 @@ class Unet(BaseNetwork):
         conv10 = layers.Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv9)
 
         up_conv10 = layers.UpSampling2D(size=(2, 2))(conv10)
-        ch, cw = self.get_crop_shape(conv8, conv10)
+        ch, cw = self.get_crop_shape(conv8, up_conv10)
         crop_conv8 = layers.Cropping2D(cropping=(ch, cw))(conv8)
         up_samp1 = layers.concatenate([crop_conv8, up_conv10], axis=concat_axis)
 
