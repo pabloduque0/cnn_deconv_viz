@@ -37,23 +37,21 @@ T1 DATA
 '''
 utrecht_data_t1 = parser.get_all_images_np_twod(t1_utrecht)
 utrecht_resized_t1 = parser.resize_slices(utrecht_data_t1, slice_shape)
-utrecht_normalized_t1 = parser.normalize_images(utrecht_resized_t1)
+utrecht_normalized_t1 = parser.normalize_images(utrecht_resized_t1, 48)
 
 del utrecht_data_t1, utrecht_resized_t1, t1_utrecht
 
 singapore_data_t1 = parser.get_all_images_np_twod(t1_singapore)
 singapore_resized_t1 = parser.resize_slices(singapore_data_t1, slice_shape)
-singapore_normalized_t1 = parser.normalize_images(singapore_resized_t1)
+singapore_normalized_t1 = parser.normalize_images(singapore_resized_t1, 48)
 
 del singapore_data_t1, singapore_resized_t1, t1_singapore
 
 amsterdam_data_t1 = parser.get_all_images_np_twod(t1_amsterdam)
 amsterdam_resized_t1 = parser.resize_slices(amsterdam_data_t1, slice_shape)
-amsterdam_normalized_t1 = parser.normalize_images(amsterdam_resized_t1)
+amsterdam_normalized_t1 = parser.normalize_images(amsterdam_resized_t1, 83)
 
 del amsterdam_data_t1, amsterdam_resized_t1, t1_amsterdam
-
-#print('T1: ', np.max(np.asanyarray(utrecht_data_t1).ravel()), np.max(np.asanyarray(singapore_resized_t1).ravel()), np.max(np.asanyarray(amsterdam_data_t1).ravel()))
 
 '''
 
@@ -63,29 +61,21 @@ FLAIR DATA
 
 utrecht_data_flair = parser.get_all_images_np_twod(flair_utrecht)
 utrecht_resized_flairs = parser.resize_slices(utrecht_data_flair, slice_shape)
-utrecht_normalized_flairs = parser.normalize_images(utrecht_resized_flairs)
+utrecht_normalized_flairs = parser.normalize_images(utrecht_resized_flairs, 48)
 
 del utrecht_data_flair, utrecht_resized_flairs, flair_utrecht
 
-utrecht_data_tophat = parser.generate_tophat(utrecht_normalized_flairs)
-
 singapore_data_flair = parser.get_all_images_np_twod(flair_singapore)
 singapore_resized_flairs = parser.resize_slices(singapore_data_flair, slice_shape)
-singapore_normalized_flairs = parser.normalize_images(singapore_resized_flairs)
+singapore_normalized_flairs = parser.normalize_images(singapore_resized_flairs, 48)
 
 del singapore_data_flair, singapore_resized_flairs, flair_singapore
 
-singapore_data_tophat = parser.generate_tophat(singapore_normalized_flairs)
-
 amsterdam_data_flair = parser.get_all_images_np_twod(flair_amsterdam)
 amsterdam_resized_flairs = parser.resize_slices(amsterdam_data_flair, slice_shape)
-amsterdam_normalized_flairs = parser.normalize_images(amsterdam_resized_flairs)
+amsterdam_normalized_flairs = parser.normalize_images(amsterdam_resized_flairs, 83)
 
 del amsterdam_data_flair, amsterdam_resized_flairs, flair_amsterdam
-
-amsterdam_data_tophat = parser.generate_tophat(amsterdam_normalized_flairs)
-
-#print('Flairs: ', np.max(np.asanyarray(utrecht_data_flair)), np.max(np.asanyarray(singapore_resized_flairs)), np.max(np.asanyarray(amsterdam_data_flair)))
 
 '''
 
@@ -95,21 +85,17 @@ DATA CONCAT
 
 normalized_t1 = utrecht_normalized_t1 + singapore_normalized_t1 + amsterdam_normalized_t1
 normalized_flairs = utrecht_normalized_flairs + singapore_normalized_flairs + amsterdam_normalized_flairs
-#data_tophat = utrecht_data_tophat + singapore_data_tophat + amsterdam_data_tophat
 
 del utrecht_normalized_t1, singapore_normalized_t1, amsterdam_normalized_t1
 del utrecht_normalized_flairs, singapore_normalized_flairs, amsterdam_normalized_flairs
-del utrecht_data_tophat, singapore_data_tophat, amsterdam_data_tophat
 
 data_t1 = np.expand_dims(np.asanyarray(normalized_t1), axis=3)
 data_flair = np.expand_dims(np.asanyarray(normalized_flairs), axis=3)
-#data_tophat = np.asanyarray(data_tophat)
 
 all_data = np.concatenate([data_t1, data_flair], axis=3)
 
 del data_t1
 del data_flair
-del data_tophat
 
 # All labels as np
 all_labels_paths = labels_utrecht + labels_singapore + labels_amsterdam
