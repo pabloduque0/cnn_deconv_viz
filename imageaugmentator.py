@@ -26,7 +26,7 @@ class ImageAugmentator():
         half_indexes = np.random.randint(0, len(dataset_x)-1, len(dataset_x)//2)
         other_half_indexes = list(set(all_indexes).difference(set(half_indexes)))
 
-        dataset_y_copy = np.concatenate([dataset_y, dataset_y, dataset_y], axis=3)
+        dataset_y_copy = np.concatenate([dataset_y, dataset_y], axis=3)
 
         # Rotations
         rotation_slice_x = dataset_x[half_indexes]
