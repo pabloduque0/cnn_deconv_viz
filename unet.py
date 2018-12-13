@@ -84,7 +84,7 @@ class Unet(BaseNetwork):
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='sigmoid')(conv22)
         model = models.Model(inputs=inputs, outputs=conv23)
 
-        model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
+        model.compile(optimizer=Adam(lr=2e-5), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
                                                                                  ground_truth_sum])
         model.summary()
