@@ -58,25 +58,33 @@ class Unet(BaseNetwork):
         conv10 = layers.Conv2D(512, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv9)
 
         up_conv10 = layers.UpSampling2D(size=(2, 2))(conv10)
-        up_samp1 = layers.concatenate([conv8, up_conv10], axis=concat_axis)
+        ch, cw = self.get_crop_shape(conv8, conv10)
+        crop_conv8 = layers.Cropping2D(cropping=(ch, cw))(conv8)
+        up_samp1 = layers.concatenate([crop_conv8, up_conv10], axis=concat_axis)
 
-        conv12 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp1)
-        conv13 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv12)
+        conv11 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp1)
+        conv12 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv11)
 
-        up_conv13 = layers.UpSampling2D(size=(2, 2))(conv13)
-        up_samp2 = layers.concatenate([conv6, up_conv13], axis=concat_axis)
+        up_conv12 = layers.UpSampling2D(size=(2, 2))(conv12)
+        ch, cw = self.get_crop_shape(conv6, up_conv12)
+        crop_conv6 = layers.Cropping2D(cropping=(ch, cw))(conv6)
+        up_samp2 = layers.concatenate([crop_conv6, up_conv12], axis=concat_axis)
 
-        conv15 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp2)
-        conv16 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv15)
+        conv13 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp2)
+        conv14 = layers.Conv2D(128, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv13)
+
+        up_conv14 = layers.UpSampling2D(size=(2, 2))(conv14)
+        ch, cw = self.get_crop_shape(conv4, up_conv14)
+        crop_conv4 = layers.Cropping2D(cropping=(ch, cw))(conv4)
+        up_samp3 = layers.concatenate([crop_conv4, up_conv14], axis=concat_axis)
+
+        conv15 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp3)
+        conv16 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv15)
 
         up_conv16 = layers.UpSampling2D(size=(2, 2))(conv16)
-        up_samp3 = layers.concatenate([conv4, up_conv16], axis=concat_axis)
-
-        conv18 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp3)
-        conv19 = layers.Conv2D(96, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv18)
-
-        up_conv19 = layers.UpSampling2D(size=(2, 2))(conv19)
-        up_samp4 = layers.concatenate([conv2, up_conv19], axis=concat_axis)
+        ch, cw = self.get_crop_shape(conv2, up_conv16)
+        crop_conv2 = layers.Cropping2D(cropping=(ch, cw))(conv2)
+        up_samp4 = layers.concatenate([crop_conv2, up_conv16], axis=concat_axis)
 
         conv21 = layers.Conv2D(64, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(up_samp4)
         conv22 = layers.Conv2D(64, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv21)

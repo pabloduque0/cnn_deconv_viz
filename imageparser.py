@@ -5,6 +5,8 @@ import itk
 import cv2
 import numpy as np
 import subprocess
+from scipy.stats import norm
+
 
 class ImageParser():
 
@@ -106,14 +108,6 @@ class ImageParser():
 
         return slices_list
 
-    def get_slices_list(self, images_list):
-
-        slices = []
-        for image in images_list:
-            for slice in image:
-                slices.append(slice)
-
-        return np.asanyarray(slices)
 
     def resize_slices(self, slices_list, to_slice_shape):
 
@@ -186,34 +180,42 @@ class ImageParser():
             cv2.imshow('Image', slice_image)
             cv2.waitKey(0)
 
-    def normalize_images(self, images_list):
+    def normalize_images(self, images_list, slice_number):
 
         normalized_list = []
 
-        np_list = np.concatenate(images_list, axis=1)
-        flattened = np.ravel(np_list)
-        non_black = flattened[flattened > 0]
-        flattened_nonblack = np.ravel(non_black)
-        sorted_data = sorted(flattened_nonblack)
+        np_list = np.asanyarray(images_list)
+        for image_idx in range(np_list.shape[0]//slice_number):
+            this_section = np_list[image_idx*slice_number:(image_idx+1)*slice_number, :, :]
+            flattened = np.ravel(this_section)
+            non_black = flattened[flattened > 0]
+            flattened_nonblack = np.ravel(non_black)
+            sorted_data = sorted(flattened_nonblack)
 
-        five_percent = int(len(sorted_data) * 0.05)
-        lower_threshold = sorted_data[five_percent]
-        upper_threshold = sorted_data[-five_percent]
-        full_max = np.max(flattened)
+            five_percent = int(len(sorted_data) * 0.05)
+            lower_threshold = sorted_data[five_percent]
+            upper_threshold = sorted_data[-five_percent]
+            full_max = np.max(flattened)
 
-        for slice in images_list:
+            for slice in this_section:
 
-            upper_indexes = np.where(slice >= upper_threshold)
-            lower_indexes = np.where(slice <= lower_threshold)
+                upper_indexes = np.where(slice >= upper_threshold)
+                lower_indexes = np.where(slice <= lower_threshold)
 
-            slice[upper_indexes] = 1.0
-            slice[lower_indexes] = 0.0
+                slice[upper_indexes] = 1.0
+                slice[lower_indexes] = 0.0
 
-            normalized = slice / full_max
+                normalized = slice / full_max
 
-            normalized_list.append(normalized)
+                normalized_list.append(normalized)
 
         return normalized_list
+
+    def gauss_normalize(self, images_list):
+
+        np_list = np.concatenate(images_list, axis=1)
+        mean, std = norm.fit(data)
+
 
     def remove_third_label(self, labels_list):
 
