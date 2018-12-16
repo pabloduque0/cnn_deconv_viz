@@ -1,23 +1,13 @@
-from keras import models
-from keras import layers
 from contextlib import redirect_stdout
 import os
 from keras.callbacks import ModelCheckpoint, TensorBoard
 from sklearn.model_selection import train_test_split
-from keras.models import load_model
-from keras.optimizers import Adam, SGD
-from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, ground_truth_count, ground_truth_sum, predicted_sum
-from keras.losses import binary_crossentropy
 import cv2
 import numpy as np
-import custom_layers
-import keras.backend as K
 import math
 import pickle
 import gc
 import psutil
-import progressbar
-
 
 class BaseNetwork():
 
@@ -224,6 +214,7 @@ class BaseNetwork():
 
         for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
             print(len(np.flatnonzero(pred)))
-            cv2.imwrite(output_path + 'original_' + str(index) + '.png', original * 255)
+            cv2.imwrite(output_path + 'original_' + str(index) + '.png',
+                        np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1) * 255)
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
