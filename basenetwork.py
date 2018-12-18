@@ -7,7 +7,6 @@ import numpy as np
 import math
 import pickle
 import gc
-import psutil
 
 class BaseNetwork():
 
