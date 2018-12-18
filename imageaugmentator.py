@@ -8,55 +8,128 @@
 import numpy as np
 import scipy.ndimage as ndi
 import gc
-import psutil
-
+from keras.preprocessing.image import apply_affine_transform
+import random
 
 class ImageAugmentator():
 
-    def __init__(self):
-        pass
+    def __init__(self, theta_range=(-30, 30), x_shift_range=(-.3, .3), y_shift_range=(-.3, .3),
+                 zx_range=(0.9, 1.2), zy_range=(0.9, 1.2), shear_range=(-.2, .2)):
+        self.theta_range = theta_range
+        self.x_shift_range = x_shift_range
+        self.y_shift_range = y_shift_range
+        self.zx_range = zx_range
+        self.zy_range = zy_range
+        self.shear_range = shear_range
 
     def perform_all_augmentations(self, dataset_x, dataset_y):
 
         if len(dataset_x) != len(dataset_y):
-            print('Wrong input :thumbs_down: . Image lists must be have the same length.')
-            return
+            raise ValueError("Wrong input. Image lists must be have the same length.")
 
-        all_indexes = np.arange(0, len(dataset_x)-1)
-        half_indexes = np.random.randint(0, len(dataset_x)-1, len(dataset_x)//2)
-        other_half_indexes = list(set(all_indexes).difference(set(half_indexes)))
-
-        dataset_y_copy = np.concatenate([dataset_y, dataset_y], axis=3)
+        none_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
+        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = self.make_indices_groups(none_black_indices, 5)
 
         # Rotations
-        rotation_slice_x = dataset_x[half_indexes]
-        rotation_slice_y = dataset_y_copy[half_indexes]
-        rotated_xs, rotated_ys = self.perform_rotations(rotation_slice_x, rotation_slice_y, 10)
-        del rotation_slice_x, rotation_slice_y, half_indexes
-        gc.collect()
+        rotated_xs, rotated_ys = self.perform_rotations(dataset_x[idx_group1],
+                                                        dataset_y[idx_group1])
         aug_dataset_x = np.concatenate([dataset_x, rotated_xs], axis=0)
         rotated_ys = np.expand_dims(np.asanyarray(rotated_ys)[:, :, :, 0], axis=3)
         aug_dataset_y = np.concatenate([dataset_y, rotated_ys], axis=0)
+        del rotated_xs, rotated_ys
         gc.collect()
 
         # Shifts
-        shift_slice_x = dataset_x[other_half_indexes]
-        shift_slice_y = dataset_y[other_half_indexes]
-        shift_xs, shift_ys = self.perform_shifts(shift_slice_x, shift_slice_y, 0.3, 0.3)
-        aug_dataset_x = np.concatenate([aug_dataset_x, shift_xs], axis=0)
-        aug_dataset_y = np.concatenate([aug_dataset_y, shift_ys], axis=0)
-        del shift_xs, shift_ys, other_half_indexes
+        shifted_xs, shifted_ys = self.perform_shifts(dataset_x[idx_group2],
+                                                     dataset_y[idx_group2])
+        aug_dataset_x = np.concatenate([aug_dataset_x, shifted_xs], axis=0)
+        aug_dataset_y = np.concatenate([aug_dataset_y, shifted_ys], axis=0)
+        del shifted_xs, shifted_ys
         gc.collect()
 
+        # Shear
+        sheared_xs, sheared_ys = self.perform_shears(dataset_x[idx_group3],
+                                                     dataset_y[idx_group3])
+        aug_dataset_x = np.concatenate([aug_dataset_x, sheared_xs], axis=0)
+        aug_dataset_y = np.concatenate([aug_dataset_y, sheared_ys], axis=0)
+        del sheared_xs, sheared_ys
+
+        # Zoom
+        zoomed_xs, zoomed_ys = self.apply_zoom(dataset_x[idx_group4],
+                                               dataset_y[idx_group4])
+        aug_dataset_x = np.concatenate([aug_dataset_x, zoomed_xs], axis=0)
+        aug_dataset_y = np.concatenate([aug_dataset_y, zoomed_ys], axis=0)
+        del zoomed_xs, zoomed_ys
+
+        # Flips
+        flipped_xs, flipped_ys = self.perform_flips(dataset_x[idx_group5],
+                                                    dataset_y[idx_group5])
+        aug_dataset_x = np.concatenate([aug_dataset_x, flipped_xs], axis=0)
+        aug_dataset_y = np.concatenate([aug_dataset_y, flipped_ys], axis=0)
+        del flipped_xs, flipped_ys
+
+        # Multiple augmentations
+        mult_xs, mult_ys = self.mutiple_agumentations(dataset_x[none_black_indices], dataset_y[none_black_indices])
+        aug_dataset_x = np.concatenate([aug_dataset_x, mult_xs], axis=0)
+        aug_dataset_y = np.concatenate([aug_dataset_y, mult_ys], axis=0)
+        del mult_xs, mult_ys
+        del idx_group1, idx_group2, idx_group3, idx_group4, idx_group5
+
+        print("Final: ", len(aug_dataset_x), len([index for index, image in enumerate(aug_dataset_y) if image[image > 0].shape != (0,)]))
         return aug_dataset_x, aug_dataset_y
 
+    def make_indices_groups(self, indices, n_groups):
 
+        size_group = len(indices) // n_groups
+
+        list_groups = []
+        for i in range(n_groups):
+            group = random.sample(indices, size_group)
+            list_groups.append(list(group))
+            indices = list(set(indices).difference(set(group)))
+
+        return list_groups
+
+    def mutiple_agumentations(self, images_x, images_y):
+
+        if len(images_x) != len(images_y):
+            raise ValueError("Wrong input. Image lists must be have the same length.")
+
+        augmented_list_x = []
+        augmented_list_y = []
+        for image_x, image_y in zip(images_x, images_y):
+            angle = (np.random.uniform(*self.theta_range) * np.pi) / 180.
+            width_shift = np.random.uniform(*self.x_shift_range)
+            height_shift = np.random.uniform(*self.y_shift_range)
+            shear = np.random.uniform(*self.shear_range)
+            zoom_x_value = np.random.uniform(*self.zx_range)
+            zoom_y_value = np.random.uniform(*self.zy_range)
+
+            augmented_x = apply_affine_transform(image_x,
+                                                 theta=angle,
+                                                 tx=width_shift,
+                                                 ty=height_shift,
+                                                 shear=shear,
+                                                 zx=zoom_x_value,
+                                                 zy=zoom_y_value,
+                                                 fill_mode="constant", cval=0.)
+            agumented_y = apply_affine_transform(image_y,
+                                                 theta=angle,
+                                                 tx=width_shift,
+                                                 ty=height_shift,
+                                                 shear=shear,
+                                                 zx=zoom_x_value,
+                                                 zy=zoom_y_value,
+                                                 fill_mode="constant", cval=0.)
+            augmented_list_x.append(augmented_x)
+            augmented_list_y.append(agumented_y)
+
+        return augmented_list_x, augmented_list_y
 
     def perform_flips(self, images_x, images_y):
 
         if len(images_x) != len(images_y):
-            print('Wrong input :thumbs_down: . Image lists must be have the same length.')
-            return
+            raise ValueError("Wrong input. Image lists must be have the same length.")
 
         flipped_list_x = []
         flipped_list_y = []
@@ -67,67 +140,73 @@ class ImageAugmentator():
 
         return flipped_list_x, flipped_list_y
 
-    def perform_rotations(self, images_x, images_y, angle):
+    def perform_rotations(self, images_x, images_y):
 
         if len(images_x) != len(images_y):
-            print('Wrong input :thumbs_down: . Image lists must be have the same length.')
-            return
+            raise ValueError("Wrong input. Image lists must be have the same length.")
 
         rotated_list_x = []
         rotated_list_y = []
         for image_x, image_y in zip(images_x, images_y):
-            rotated_x, rotated_y = self.random_rotation(image_x, image_y, angle)
+            angle = (np.random.uniform(*self.theta_range) * np.pi) / 180.
+            rotated_x = apply_affine_transform(image_x, theta=angle, fill_mode="constant", cval=0.)
+            rotated_y = apply_affine_transform(image_y, theta=angle, fill_mode="constant", cval=0.)
             rotated_list_x.append(rotated_x)
             rotated_list_y.append(rotated_y)
 
         return rotated_list_x, rotated_list_y
 
 
-    def perform_shifts(self, images_x, images_y, width_shift, height_shift):
+    def perform_shifts(self, images_x, images_y):
 
         if len(images_x) != len(images_y):
-            print('Wrong input :thumbs_down: . Image lists must be have the same length.')
-            return
+            raise ValueError("Wrong input. Image lists must be have the same length.")
 
         shifted_list_x = []
         shifted_list_y = []
         for image_x, image_y in zip(images_x, images_y):
-            rotated_x, rotated_y = self.random_shift(image_x, image_y, width_shift, height_shift)
+            width_shift = np.random.uniform(*self.x_shift_range)
+            height_shift = np.random.uniform(*self.y_shift_range)
+            rotated_x = apply_affine_transform(image_x, tx=width_shift, ty=height_shift, fill_mode="constant", cval=0.)
+            rotated_y = apply_affine_transform(image_y, tx=width_shift, ty=height_shift, fill_mode="constant", cval=0.)
             shifted_list_x.append(rotated_x)
             shifted_list_y.append(rotated_y)
 
         return shifted_list_x, shifted_list_y
 
-    def random_shift(self, x, y, wrg, hrg, row_axis=0, col_axis=1, channel_axis=2,
-                     fill_mode='constant', cval=0.0):
-        """Performs a random spatial shift of a Numpy image tensor.
-        # Arguments
-            x: Input tensor. Must be 3D.
-            wrg: Width shift range, as a float fraction of the width.
-            hrg: Height shift range, as a float fraction of the height.
-            row_axis: Index of axis for rows in the input tensor.
-            col_axis: Index of axis for columns in the input tensor.
-            channel_axis: Index of axis for channels in the input tensor.
-            fill_mode: Points outside the boundaries of the input
-                are filled according to the given mode
-                (one of `{'constant', 'nearest', 'reflect', 'wrap'}`).
-            cval: Value used for points outside the boundaries
-                of the input if `mode='constant'`.
-        # Returns
-            Shifted Numpy image tensor.
-        """
-        h, w = x.shape[row_axis], x.shape[col_axis]
-        tx = np.random.uniform(-hrg, hrg) * h
-        ty = np.random.uniform(-wrg, wrg) * w
-        translation_matrix = np.array([[1, 0, tx],
-                                       [0, 1, ty],
-                                       [0, 0, 1]])
 
-        transform_matrix = translation_matrix  # no need to do offset
-        x = self.apply_transform(x, transform_matrix, channel_axis, fill_mode, cval)
-        y = self.apply_transform(y, transform_matrix, channel_axis, fill_mode, cval)
+    def perform_shears(self, images_x, images_y):
 
-        return x, y
+        if len(images_x) != len(images_y):
+            raise ValueError("Wrong input. Image lists must be have the same length.")
+
+        sheared_list_x = []
+        sheared_list_y = []
+        for image_x, image_y in zip(images_x, images_y):
+            shear = np.random.uniform(*self.shear_range)
+            sheared_x = apply_affine_transform(image_x, shear=shear, fill_mode="constant", cval=0.)
+            sheared_y = apply_affine_transform(image_y, shear=shear, fill_mode="constant", cval=0.)
+            sheared_list_x.append(sheared_x)
+            sheared_list_y.append(sheared_y)
+
+        return sheared_list_x, sheared_list_y
+
+    def apply_zoom(self, images_x, images_y):
+
+        if len(images_x) != len(images_y):
+            raise ValueError("Wrong input. Image lists must be have the same length.")
+
+        zoomed_list_x = []
+        zoomed_list_y = []
+        for image_x, image_y in zip(images_x, images_y):
+            zoom_x_value = np.random.uniform(*self.zx_range)
+            zoom_y_value = np.random.uniform(*self.zy_range)
+            zoomed_x = apply_affine_transform(image_x, zx=zoom_x_value, zy=zoom_y_value, fill_mode="constant", cval=0.)
+            zoomed_y = apply_affine_transform(image_y, zx=zoom_x_value, zy=zoom_y_value, fill_mode="constant", cval=0.)
+            zoomed_list_x.append(zoomed_x)
+            zoomed_list_y.append(zoomed_y)
+
+        return zoomed_list_x, zoomed_list_y
 
     def random_flip(self, x, y, axis):
 
@@ -141,74 +220,6 @@ class ImageAugmentator():
 
         return x, y
 
-    def random_rotation(self, x, y, rg, row_axis=0, col_axis=1, channel_axis=2, fill_mode='constant', cval=0.0):
-        """Performs a random rotation of a Numpy image tensor.
-        # Arguments
-            x: Input tensor. Must be 3D.
-            rg: Rotation range, in degrees.
-            row_axis: Index of axis for rows in the input tensor.
-            col_axis: Index of axis for columns in the input tensor.
-            channel_axis: Index of axis for channels in the input tensor.
-            fill_mode: Points outside the boundaries of the input
-                are filled according to the given mode
-                (one of `{'constant', 'nearest', 'reflect', 'wrap'}`).
-            cval: Value used for points outside the boundaries
-                of the input if `mode='constant'`.
-        # Returns
-            Rotated Numpy image tensor.
-        """
-
-        if x.shape != y.shape:
-            raise Exception('X and Y images must have same shape.')
-
-        theta = np.deg2rad(np.random.uniform(-rg, rg))
-        rotation_matrix = np.array([[np.cos(theta), -np.sin(theta), 0],
-                                    [np.sin(theta), np.cos(theta), 0],
-                                    [0, 0, 1]])
-
-
-        h, w = x.shape[row_axis], x.shape[col_axis]
-        transform_matrix = self.transform_matrix_offset_center(rotation_matrix, h, w)
-        x = self.apply_transform(x, transform_matrix, channel_axis, fill_mode, cval)
-        y = self.apply_transform(y, transform_matrix, channel_axis, fill_mode, cval)
-
-        return x, y
-    
-    def transform_matrix_offset_center(self, matrix, x, y):
-        o_x = float(x) / 2 + 0.5
-        o_y = float(y) / 2 + 0.5
-        offset_matrix = np.array([[1, 0, o_x], [0, 1, o_y], [0, 0, 1]])
-        reset_matrix = np.array([[1, 0, -o_x], [0, 1, -o_y], [0, 0, 1]])
-        transform_matrix = np.dot(np.dot(offset_matrix, matrix), reset_matrix)
-        return transform_matrix
-
-
-    def apply_transform(self, x, transform_matrix, channel_axis=0, fill_mode='constant', cval=0.0):
-        """Apply the image transformation specified by a matrix.
-        # Arguments
-            x: 2D numpy array, single image.
-            transform_matrix: Numpy array specifying the geometric transformation.
-            channel_axis: Index of axis for channels in the input tensor.
-            fill_mode: Points outside the boundaries of the input
-                are filled according to the given mode
-                (one of `{'constant', 'nearest', 'reflect', 'wrap'}`).
-            cval: Value used for points outside the boundaries
-                of the input if `mode='constant'`.
-        # Returns
-            The transformed version of the input.
-        """
-        x = np.rollaxis(x, channel_axis, 0)
-        final_affine_matrix = transform_matrix[:2, :2]
-        final_offset = transform_matrix[:2, 2]
-        channel_images = [ndi.interpolation.affine_transform(
-            x_channel,
-            final_affine_matrix,
-            final_offset,
-            order=1,
-            mode=fill_mode,
-            cval=cval) for x_channel in x]
-        x = np.stack(channel_images, axis=0)
-        x = np.rollaxis(x, 0, channel_axis + 1)
-        return x
-
+    def check_data_augmentation(self):
+        pass
 
