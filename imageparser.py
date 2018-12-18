@@ -201,11 +201,9 @@ class ImageParser():
 
                 upper_indexes = np.where(slice >= upper_threshold)
                 lower_indexes = np.where(slice <= lower_threshold)
-
+                normalized = slice / full_max
                 slice[upper_indexes] = 1.0
                 slice[lower_indexes] = 0.0
-
-                normalized = slice / full_max
 
                 normalized_list.append(normalized)
 
