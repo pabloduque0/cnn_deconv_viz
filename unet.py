@@ -15,8 +15,6 @@ import keras.backend as K
 import math
 import pickle
 import gc
-import psutil
-import progressbar
 from basenetwork import BaseNetwork
 
 class Unet(BaseNetwork):
