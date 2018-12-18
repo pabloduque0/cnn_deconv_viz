@@ -72,7 +72,7 @@ class ImageParser():
         return images
 
 
-    def get_all_images_np(self, paths_list, slice_shape, normalization=True):
+    def process_all_images_np(self, paths_list, slice_shape, normalization=True):
         images = []
         for path in paths_list:
             image = itk.imread(path)
