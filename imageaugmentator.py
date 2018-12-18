@@ -10,6 +10,7 @@ import scipy.ndimage as ndi
 import gc
 from keras.preprocessing.image import apply_affine_transform
 import random
+import cv2
 
 class ImageAugmentator():
 
@@ -22,13 +23,13 @@ class ImageAugmentator():
         self.zy_range = zy_range
         self.shear_range = shear_range
 
-    def perform_all_augmentations(self, dataset_x, dataset_y):
+    def perform_all_augmentations(self, dataset_x, dataset_y, visualize=False):
 
         if len(dataset_x) != len(dataset_y):
             raise ValueError("Wrong input. Image lists must be have the same length.")
 
-        none_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
-        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = self.make_indices_groups(none_black_indices, 5)
+        non_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
+        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = self.make_indices_groups(non_black_indices, 5)
 
         # Rotations
         rotated_xs, rotated_ys = self.perform_rotations(dataset_x[idx_group1],
@@ -37,7 +38,6 @@ class ImageAugmentator():
         rotated_ys = np.expand_dims(np.asanyarray(rotated_ys)[:, :, :, 0], axis=3)
         aug_dataset_y = np.concatenate([dataset_y, rotated_ys], axis=0)
         del rotated_xs, rotated_ys
-        gc.collect()
 
         # Shifts
         shifted_xs, shifted_ys = self.perform_shifts(dataset_x[idx_group2],
@@ -45,7 +45,6 @@ class ImageAugmentator():
         aug_dataset_x = np.concatenate([aug_dataset_x, shifted_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, shifted_ys], axis=0)
         del shifted_xs, shifted_ys
-        gc.collect()
 
         # Shear
         sheared_xs, sheared_ys = self.perform_shears(dataset_x[idx_group3],
@@ -69,13 +68,19 @@ class ImageAugmentator():
         del flipped_xs, flipped_ys
 
         # Multiple augmentations
-        mult_xs, mult_ys = self.mutiple_agumentations(dataset_x[none_black_indices], dataset_y[none_black_indices])
+        mult_xs, mult_ys = self.mutiple_agumentations(dataset_x[non_black_indices], dataset_y[non_black_indices])
         aug_dataset_x = np.concatenate([aug_dataset_x, mult_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, mult_ys], axis=0)
         del mult_xs, mult_ys
         del idx_group1, idx_group2, idx_group3, idx_group4, idx_group5
+        gc.collect()
 
-        print("Final: ", len(aug_dataset_x), len([index for index, image in enumerate(aug_dataset_y) if image[image > 0].shape != (0,)]))
+        if visualize:
+            self.visualize_data_augmentation(dataset_x[non_black_indices],
+                                         dataset_y[non_black_indices],
+                                     aug_dataset_x[len(dataset_x):, ...],
+                                     aug_dataset_y[len(dataset_y):, ...])
+
         return aug_dataset_x, aug_dataset_y
 
     def make_indices_groups(self, indices, n_groups):
@@ -220,6 +225,16 @@ class ImageAugmentator():
 
         return x, y
 
-    def check_data_augmentation(self):
-        pass
+    def visualize_data_augmentation(self, orig_x, orig_y, aug_x, aug_y):
 
+        mult_aug_x, mult_aug_y = aug_x[len(orig_x):, ...], aug_y[len(orig_y):, ...]
+        single_aug_x, single_aug_y = aug_x[:len(orig_x), ...], aug_y[:len(orig_y), ...]
+        for x, y, aug1_x, aug1_y, aug2_x, aug2_y in zip(orig_x, orig_y, single_aug_x,
+                                                        single_aug_y, mult_aug_x, mult_aug_y):
+            row1 = np.concatenate([x[..., 0], x[..., 1], y[..., 0]], axis=1)
+            row2 = np.concatenate([aug1_x[..., 0], aug1_x[..., 1], aug1_y[..., 0]], axis=1)
+            row3 = np.concatenate([aug2_x[..., 0], aug2_x[..., 1], aug2_y[..., 0]], axis=1)
+            full_image = np.concatenate([row1, row2, row3], axis=0)
+
+            cv2.imshow("Image_comp", full_image)
+            cv2.waitKey(0)
