@@ -30,7 +30,6 @@ class ImageAugmentator():
 
         non_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
         idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = self.make_indices_groups(non_black_indices, 5)
-
         # Rotations
         rotated_xs, rotated_ys = self.perform_rotations(dataset_x[idx_group1],
                                                         dataset_y[idx_group1])
@@ -67,6 +66,7 @@ class ImageAugmentator():
         aug_dataset_y = np.concatenate([aug_dataset_y, flipped_ys], axis=0)
         del flipped_xs, flipped_ys
 
+
         # Multiple augmentations
         mult_xs, mult_ys = self.mutiple_agumentations(dataset_x[non_black_indices], dataset_y[non_black_indices])
         aug_dataset_x = np.concatenate([aug_dataset_x, mult_xs], axis=0)
@@ -86,12 +86,26 @@ class ImageAugmentator():
     def make_indices_groups(self, indices, n_groups):
 
         size_group = len(indices) // n_groups
+        list_groups = []
+        for i in range(n_groups):
 
+            if i < n_groups-1:
+                group = indices[i * size_group : (i+1) * size_group]
+            else:
+                group = indices[i * size_group: ]
+
+            list_groups.append(sorted(list(group)))
+
+        return list_groups
+
+
+    def sample_indices_groups(self, indices, n_groups):
+        size_group = len(indices) // n_groups
         list_groups = []
         for i in range(n_groups):
             group = random.sample(indices, size_group)
-            list_groups.append(list(group))
-            indices = list(set(indices).difference(set(group)))
+            list_groups.append(sorted(list(group)))
+            indices = sorted(list(set(indices).difference(set(group))))
 
         return list_groups
 
@@ -103,7 +117,7 @@ class ImageAugmentator():
         augmented_list_x = []
         augmented_list_y = []
         for image_x, image_y in zip(images_x, images_y):
-            angle = (np.random.uniform(*self.theta_range) * np.pi) / 180.
+            angle = np.random.uniform(*self.theta_range)
             width_shift = np.random.uniform(*self.x_shift_range)
             height_shift = np.random.uniform(*self.y_shift_range)
             shear = np.random.uniform(*self.shear_range)
@@ -153,7 +167,7 @@ class ImageAugmentator():
         rotated_list_x = []
         rotated_list_y = []
         for image_x, image_y in zip(images_x, images_y):
-            angle = (np.random.uniform(*self.theta_range) * np.pi) / 180.
+            angle = np.random.uniform(*self.theta_range)
             rotated_x = apply_affine_transform(image_x, theta=angle, fill_mode="constant", cval=0.)
             rotated_y = apply_affine_transform(image_y, theta=angle, fill_mode="constant", cval=0.)
             rotated_list_x.append(rotated_x)
