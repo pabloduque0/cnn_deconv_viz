@@ -86,12 +86,26 @@ class ImageAugmentator():
     def make_indices_groups(self, indices, n_groups):
 
         size_group = len(indices) // n_groups
+        list_groups = []
+        for i in range(n_groups):
 
+            if i < n_groups-1:
+                group = indices[i * size_group : (i+1) * size_group]
+            else:
+                group = indices[i * size_group: ]
+
+            list_groups.append(sorted(list(group)))
+
+        return list_groups
+
+
+    def sample_indices_groups(self, indices, n_groups):
+        size_group = len(indices) // n_groups
         list_groups = []
         for i in range(n_groups):
             group = random.sample(indices, size_group)
-            list_groups.append(list(group))
-            indices = list(set(indices).difference(set(group)))
+            list_groups.append(sorted(list(group)))
+            indices = sorted(list(set(indices).difference(set(group))))
 
         return list_groups
 
