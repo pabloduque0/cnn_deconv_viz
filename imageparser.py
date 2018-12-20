@@ -189,21 +189,17 @@ class ImageParser():
             this_section = np_list[image_idx*slice_number:(image_idx+1)*slice_number, :, :]
             flattened = np.ravel(this_section)
             non_black = flattened[flattened > 0]
-            flattened_nonblack = np.ravel(non_black)
-            sorted_data = sorted(flattened_nonblack)
 
-            five_percent = int(len(sorted_data) * 0.05)
-            lower_threshold = sorted_data[five_percent]
-            upper_threshold = sorted_data[-five_percent]
-            full_max = np.max(flattened)
+            lower_threshold = np.percentile(non_black, 0.5)
+            upper_threshold = np.percentile(non_black, 99.7)
+            #print("MAXS: ", np.max(non_black), upper_threshold, "MINS: ", np.min(non_black), lower_threshold)
 
             for slice in this_section:
-
                 upper_indexes = np.where(slice >= upper_threshold)
                 lower_indexes = np.where(slice <= lower_threshold)
-                normalized = slice / full_max
-                slice[upper_indexes] = 1.0
-                slice[lower_indexes] = 0.0
+                normalized = (slice - lower_threshold) / (upper_threshold - lower_threshold)
+                normalized[upper_indexes] = 1.0
+                normalized[lower_indexes] = 0.0
 
                 normalized_list.append(normalized)
 
