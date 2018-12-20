@@ -6,7 +6,7 @@ import cv2
 import numpy as np
 import subprocess
 from scipy.stats import norm
-
+import matplotlib.pyplot as plt
 
 class ImageParser():
 
@@ -204,6 +204,49 @@ class ImageParser():
                 normalized_list.append(normalized)
 
         return normalized_list
+
+
+    def study_intensity_values(self, flair_list, t1_list, labels_list, slice_number):
+
+        flair_list = np.asanyarray(flair_list)
+        t1_list = np.asanyarray(t1_list)
+        labels_list = np.asanyarray(labels_list)
+
+        for image_idx in range(flair_list.shape[0] // slice_number):
+            this_flair = flair_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
+            this_t1 = t1_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
+            this_labels = labels_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
+            labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
+
+            flair_flattened = np.ravel(this_flair)
+            t1_flattened = np.ravel(this_t1)
+            flair_non_black = flair_flattened[flair_flattened > 0]
+            t1_non_black = t1_flattened[t1_flattened > 0]
+
+            flair_norm1, flair_norm2 = self.make_both_normalizations(flair_non_black)
+            t1_norm1, t1_norm2 = self.make_both_normalizations(t1_non_black)
+            fig, ax = plt.subplots(2, 1)
+            ax[0].hist(flair_norm1, bins=100, label="Norm_percentil")
+            ax[0].hist(flair_norm1[labels_idx], bins=100, label="Norm_percentil")
+
+            ax[1].hist(flair_norm2, bins=100, label="Norm_minmax")
+            ax[1].hist(flair_norm2[labels_idx], bins=100, label="Norm_minmax")
+            plt.show()
+
+    def make_both_normalizations(self, non_black):
+
+        lower_threshold = np.percentile(non_black, 0.5)
+        upper_threshold = np.percentile(non_black, 99.7)
+
+        upper_indexes = np.where(non_black >= upper_threshold)
+        lower_indexes = np.where(non_black <= lower_threshold)
+        normalized = (non_black - lower_threshold) / (upper_threshold - lower_threshold)
+        normalized[upper_indexes] = 1.0
+        normalized[lower_indexes] = 0.0
+        normalized2 = (non_black - np.min(non_black)) / (np.max(non_black) - np.min(non_black))
+
+        return normalized, normalized2
+
 
     def gauss_normalize(self, images_list):
 
