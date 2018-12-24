@@ -284,37 +284,36 @@ class ImageParser():
             this_flair = flair_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
             this_t1 = t1_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
             this_labels = labels_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
-            labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
+            flair_labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
+            t1_labels_idx = np.where(this_labels[np.where(this_t1 > 0)] > 0.)
 
             flair_flattened = np.ravel(this_flair)
             t1_flattened = np.ravel(this_t1)
             flair_non_black = flair_flattened[flair_flattened > 0]
             t1_non_black = t1_flattened[t1_flattened > 0]
 
-            flair_norm1, flair_norm2 = self.make_both_normalizations(flair_non_black)
-            t1_norm1, t1_norm2 = self.make_both_normalizations(t1_non_black)
+            flair_norm1, flair_norm2 = self.make_both_normalizations(this_flair, flair_non_black, flair_labels_idx)
+            t1_norm1, t1_norm2 = self.make_both_normalizations(this_t1, t1_non_black, t1_labels_idx)
+            """
             fig, ax = plt.subplots(2, 1)
-            ax[0].hist(flair_norm1, bins=100, label="Norm_percentil")
-            ax[0].hist(flair_norm1[labels_idx], bins=100, label="Norm_percentil")
+            ax[0].hist(flair_norm1, bins=100, label="Norm_percentil", alpha=0.5)
+            ax_2y = ax[0].twinx()
+            ax_2y.hist(flair_norm1[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
+            ax_2y.tick_params('y', colors='r')
 
-            ax[1].hist(flair_norm2, bins=100, label="Norm_minmax")
-            ax[1].hist(flair_norm2[labels_idx], bins=100, label="Norm_minmax")
+            mean, std = norm.fit(flair_norm1)
+            mean, std = norm.fit(flair_norm1[flair_labels_idx])
+
+            ax[1].hist(flair_norm2, bins=100, label="Norm_minmax", alpha=0.5)
+            ax2_2y = ax[1].twinx()
+            ax2_2y.hist(flair_norm2[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
+            ax2_2y.tick_params('y', colors='r')
+
             plt.show()
-
-    def make_both_normalizations(self, non_black):
-
-        lower_threshold = np.percentile(non_black, 0.5)
-        upper_threshold = np.percentile(non_black, 99.7)
-
-        upper_indexes = np.where(non_black >= upper_threshold)
-        lower_indexes = np.where(non_black <= lower_threshold)
-        normalized = (non_black - lower_threshold) / (upper_threshold - lower_threshold)
-        normalized[upper_indexes] = 1.0
-        normalized[lower_indexes] = 0.0
-        normalized2 = (non_black - np.min(non_black)) / (np.max(non_black) - np.min(non_black))
-
-        return normalized, normalized2
-
+            """
+            for flair, t1 in zip(flair_norm1, t1_norm1):
+                cv2.imshow("Flair-T1", np.concatenate([flair, t1], axis=1))
+                cv2.waitKey(0)
 
     def gauss_normalize(self, images_list):
 
