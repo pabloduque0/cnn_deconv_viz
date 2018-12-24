@@ -64,16 +64,21 @@ labels_utrecht_imgs = parser.get_all_images_np_twod(labels_utrecht)
 labels_singapore_imgs = parser.get_all_images_np_twod(labels_singapore)
 labels_amsterdam_imgs = parser.get_all_images_np_twod(labels_amsterdam)
 
-labels_utrecht_resized = parser.get_all_images_np_twod(labels_utrecht)
-labels_singapore_resized = parser.get_all_images_np_twod(labels_singapore)
-labels_amsterdam_resized = parser.get_all_images_np_twod(labels_amsterdam)
+labels_utrecht_resized = parser.resize_slices(labels_utrecht_imgs, slice_shape)
+labels_singapore_resized = parser.resize_slices(labels_singapore_imgs, slice_shape)
+labels_amsterdam_resized = parser.resize_slices(labels_amsterdam_imgs, slice_shape)
 
-all_resized_labels = labels_utrecht_resized + labels_singapore_resized + labels_amsterdam_resized
-final_label_imgs = parser.remove_third_label(all_resized_labels)
+labels_utrecht_resized = parser.remove_third_label(labels_utrecht_resized)
+labels_singapore_resized = parser.remove_third_label(labels_singapore_resized)
+labels_amsterdam_resized = parser.remove_third_label(labels_amsterdam_resized)
+
+final_label_imgs = np.concatenate([labels_utrecht_resized,
+                                   labels_singapore_resized,
+                                   labels_amsterdam_resized], axis=0)
+final_label_imgs = np.expand_dims(np.asanyarray(final_label_imgs), axis=3)
 
 del labels_utrecht_imgs, labels_singapore_imgs, labels_amsterdam_imgs
 
-final_label_imgs = np.expand_dims(np.asanyarray(final_label_imgs), axis=3)
 
 
 '''
@@ -106,8 +111,12 @@ DATA CONCAT
 
 '''
 
-normalized_t1 = utrecht_normalized_t1 + singapore_normalized_t1 + amsterdam_normalized_t1
-normalized_flairs = utrecht_normalized_flairs + singapore_normalized_flairs + amsterdam_normalized_flairs
+normalized_t1 = np.concatenate([utrecht_normalized_t1,
+                                singapore_normalized_t1,
+                                amsterdam_normalized_t1], axis=0)
+normalized_flairs = np.concatenate([utrecht_normalized_flairs,
+                                    singapore_normalized_flairs,
+                                    amsterdam_normalized_flairs], axis=0)
 
 del utrecht_normalized_t1, singapore_normalized_t1, amsterdam_normalized_t1
 del utrecht_normalized_flairs, singapore_normalized_flairs, amsterdam_normalized_flairs
