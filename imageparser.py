@@ -198,7 +198,7 @@ class ImageParser():
 
         return normalized_list
 
-    def normalize_quantile_all(self, flair_list, labels_list, slice_number):
+    def normalize_quantile(self, flair_list, labels_list, slice_number):
 
         normalized_images = []
         flair_list = np.asanyarray(flair_list)
