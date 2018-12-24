@@ -180,7 +180,7 @@ class ImageParser():
             cv2.imshow('Image', slice_image)
             cv2.waitKey(0)
 
-    def normalize_images(self, images_list, slice_number):
+    def normalize_minmax(self, images_list, slice_number):
 
         normalized_list = []
 
@@ -190,21 +190,89 @@ class ImageParser():
             flattened = np.ravel(this_section)
             non_black = flattened[flattened > 0]
 
-            lower_threshold = np.percentile(non_black, 0.5)
-            upper_threshold = np.percentile(non_black, 99.7)
-            #print("MAXS: ", np.max(non_black), upper_threshold, "MINS: ", np.min(non_black), lower_threshold)
-
+            lower_threshold = np.min(non_black)
+            upper_threshold = np.max(non_black)
             for slice in this_section:
-                upper_indexes = np.where(slice >= upper_threshold)
-                lower_indexes = np.where(slice <= lower_threshold)
                 normalized = (slice - lower_threshold) / (upper_threshold - lower_threshold)
-                normalized[upper_indexes] = 1.0
-                normalized[lower_indexes] = 0.0
-
                 normalized_list.append(normalized)
 
         return normalized_list
 
+    def normalize_quantile_all(self, flair_list, labels_list, slice_number):
+
+        normalized_images = []
+        flair_list = np.asanyarray(flair_list)
+        labels_list = np.asanyarray(labels_list)
+
+        for image_idx in range(flair_list.shape[0] // slice_number):
+            this_flair = flair_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
+            this_labels = labels_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
+            flair_labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
+
+            flair_non_black = this_flair[this_flair > 0]
+            flair_normalized = self.find_best_quantile_normalization(this_flair, flair_non_black, flair_labels_idx)
+            normalized_images.append(flair_normalized)
+
+        normalized_images = np.concatenate(normalized_images, axis=0)
+        return normalized_images
+
+
+
+    def find_best_quantile_normalization(self, image, non_black, labels_idx):
+
+        flair_not_labels_idx = np.where(np.delete(non_black, labels_idx) != None)
+
+        upper_base = 90.
+        max_difference = 0
+        best_upper_base = None
+
+        for i in range((int(100 - upper_base) * 10)):
+            lower_threshold, upper_threshold, upper_indexes, lower_indexes = self.get_thresholds_and_indexes(non_black,
+                                                                                                        upper_base)
+            normalized_perc = (non_black - lower_threshold) / (upper_threshold - lower_threshold)
+            normalized_perc[upper_indexes] = 1.0
+            normalized_perc[lower_indexes] = 0.0
+
+            normalized_minmax = (non_black - np.min(non_black)) / (np.max(non_black) - np.min(non_black))
+
+            mean_perc, std = norm.fit(normalized_perc[flair_not_labels_idx])
+            mean_idxs, std = norm.fit(normalized_perc[labels_idx])
+            diff_perc = abs(mean_perc - mean_idxs)
+
+            mean_minmax, std = norm.fit(normalized_minmax[flair_not_labels_idx])
+            mean_minmax_idxs, std = norm.fit(normalized_minmax[labels_idx])
+            diff_minmax = abs(mean_minmax - mean_minmax_idxs)
+
+            if abs(diff_perc - diff_minmax) > max_difference:
+                max_difference = abs(diff_perc - diff_minmax)
+                best_upper_base = upper_base
+
+            upper_base += .1
+
+        lower_threshold, upper_threshold, upper_indexes, lower_indexes = self.get_thresholds_and_indexes(non_black,
+                                                                                                         best_upper_base,
+                                                                                                         image)
+        final_normalized = (image - lower_threshold) / (upper_threshold - lower_threshold)
+        final_normalized[upper_indexes] = 1.0
+        final_normalized[lower_indexes] = 0.0
+        print("best_upper_base: ", best_upper_base)
+
+        return final_normalized
+
+
+    def get_thresholds_and_indexes(self, non_black, upper_perc, full_image=None, lower_perc=0.5):
+
+        lower_threshold = np.percentile(non_black, lower_perc)
+        upper_threshold = np.percentile(non_black, upper_perc)
+
+        if full_image is None:
+            upper_indexes = np.where(non_black >= upper_threshold)
+            lower_indexes = np.where(non_black <= lower_threshold)
+        else:
+            upper_indexes = np.where(full_image >= upper_threshold)
+            lower_indexes = np.where(full_image <= lower_threshold)
+
+        return lower_threshold, upper_threshold, upper_indexes, lower_indexes
 
     def study_intensity_values(self, flair_list, t1_list, labels_list, slice_number):
 
