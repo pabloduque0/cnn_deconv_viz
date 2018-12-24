@@ -3,7 +3,6 @@ from keras.engine.topology import Layer
 import tensorflow as tf
 from keras.layers import MaxPool2D, UpSampling2D, Layer
 import numpy as np
-from skimage.measure import block_reduce
 from numpy.lib.stride_tricks import as_strided
 
 class MaxPoolingWithArgmax2D(MaxPool2D):
