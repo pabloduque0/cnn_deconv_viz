@@ -17,6 +17,14 @@ def dice_coefficient_loss(y_true, y_pred):
 def sigmoid(x):
     return 1. / (1. + K.exp(-x))
 
+def segmentation_recall(y_true, y_pred):
+    y_true_f = K.flatten(y_true)
+    y_pred_f = K.flatten(y_pred)
+
+    recall = K.sum(y_pred_f * y_true_f) / tf.cast(tf.size(y_true_f), tf.float32)
+    return recall
+
+
 def weighted_crossentropy_pixelwise(y_true, y_pred):
 
     y_pred = tf.clip_by_value(y_pred, 1e-7, 1 - 1e-7)
@@ -57,3 +65,5 @@ predicted_sum = prediction_sum
 
 ground_truth_count = label_count
 ground_truth_sum =   label_sum
+
+recall = segmentation_recall
