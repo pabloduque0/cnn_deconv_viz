@@ -75,6 +75,22 @@ def get_selected_maps(tensor_input, indices, new_shape):
     return final_maps
 
 
+def reverse_upconcat(tensor_input, height_factor, width_factor):
+    input_shape = K.int_shape(tensor_input)
+    output = tf.image.resize_nearest_neighbor(
+        tensor_input,
+        [int(input_shape[1] * height_factor), int(input_shape[2] * width_factor)],
+        align_corners=False,
+        name=None
+    )
+    return output
+
+def reverse_upconcat_output_shape(input_shape, height_factor, width_factor):
+    input_shape = list(input_shape)
+    new_shape = (input_shape[1]*height_factor, input_shape[2]*width_factor, input_shape[3])
+    return new_shape
+
+
 def unpoolingMask2D_output_shape(input_shape):
 
     """
