@@ -222,7 +222,7 @@ class ImageParser():
 
         flair_not_labels_idx = np.where(np.delete(non_black, labels_idx) != None)
 
-        upper_base = 90.
+        upper_base = 95.
         max_difference = 0
         best_upper_base = None
 
