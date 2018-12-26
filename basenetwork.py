@@ -106,7 +106,6 @@ class BaseNetwork():
         X_train, X_test, y_train, y_test = train_test_split(X,
                                                             y,
                                                             test_size=test_size)
-
         del X, y
         gc.collect()
 
@@ -158,16 +157,11 @@ class BaseNetwork():
 
         del X, y
         gc.collect()
-        print(psutil.Process().memory_info().rss / 2 ** 30)
-
-
         number_batches = self.save_batch_files(X_train, y_train, base_path, batch_size, "train")
         _ = self.save_batch_files(X_test, y_test, base_path, batch_size, "test")
 
         del X_train, y_train, X_test, y_test
         gc.collect()
-        print("Pre fit_generator: ", psutil.Process().memory_info().rss / 2 ** 30)
-
 
         self.model.fit_generator(self.train_generator(base_path, number_batches, "train"),
                        steps_per_epoch=1,
@@ -186,7 +180,6 @@ class BaseNetwork():
 
         _range = math.ceil(data.shape[0]/batch_size)
         counter = 0
-        bar = progressbar.ProgressBar()
         for id in bar(range(_range)):
             tuple_to_save = (data[:, :, :, counter:counter+batch_size], labels[:, :, :, counter:counter+batch_size])
             file_name = data_output_path + "data_and_labels_" + str(id) + ".pk"
