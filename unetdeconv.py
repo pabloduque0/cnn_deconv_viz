@@ -256,15 +256,41 @@ class UnetDeconv(BaseNetwork):
 
     def visualize_activations(self, data, labels, batch_size=1):
 
-        output_path = self.full_paths_dict['output_path']
+        viz_path = self.full_paths_dict['viz_path']
 
-        predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
+        all_predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
 
-        print("Predictions deconv shape", predictions.shape)
-        for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-            cv2.imwrite(output_path + str(index) + '_original_deconv_activations_layer_4' + '.png', original * 255)
-            cv2.imwrite(output_path + str(index) + '_label_deconv_activations_layer_4' + '.png', label * 255)
-            for channel in range(predictions.shape[-1]):
-                file_name = output_path + str(index) + '_label_deconv_activations_layer_4_' + "chan_" + str(channel) + '.png'
-                cv2.imwrite(file_name, pred[:, :, channel] * 255)
+        for index, (original, label) in enumerate(zip(data, labels)):
+            complete_path = self.create_viz_folders(viz_path, index, "_image")
+            flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
+            cv2.imwrite(complete_path + str(index) + "_original_deconv" + ".png", flair_t1 * 255)
+            cv2.imwrite(complete_path + str(index) + "_label_deconv" + ".png", label * 255)
 
+            for layer_idx, predictions in enumerate(all_predictions):
+                layer_path = self.create_viz_folders(complete_path, layer_idx, "_layer")
+                for one_pred in predictions:
+                    file_name = layer_path + str(index) + "_deconv_activations_layer_chann_" + str(layer_idx) + ".png"
+                    cv2.imwrite(file_name, one_pred[..., layer_idx] * 255)
+
+        """
+        for layer_idx, predictions in enumerate(all_predictions):
+            complete_path = self.create_layer_folder(viz_path, layer_idx)
+            for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
+                flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
+                cv2.imwrite(complete_path + str(index) + '_original_deconv_activations_layer' + '.png', flair_t1 * 255)
+                cv2.imwrite(complete_path + str(index) + '_label_deconv_activations_layer' + '.png', label * 255)
+                for channel in range(pred.shape[-1]):
+                    file_name = complete_path + str(index) + '_deconv_activations_layer_' + "chan_" + str(channel) + '.png'
+                    cv2.imwrite(file_name, pred[:, :, channel] * 255)
+
+        """
+
+
+    def create_viz_folders(self, viz_path, index, suffix):
+
+        complete_path = os.path.join(viz_path, str(index) + suffix)
+
+        if not os.path.exists(complete_path):
+            os.makedirs(complete_path)
+
+        return complete_path
