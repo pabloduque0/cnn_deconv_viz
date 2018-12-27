@@ -234,7 +234,6 @@ class UnetDeconv(BaseNetwork):
 
         del X, y
         gc.collect()
-        print(psutil.Process().memory_info().rss / 2 ** 30)
 
 
         number_batches = self.save_batch_files(X_train, y_train, base_path, batch_size, "train")
@@ -242,7 +241,6 @@ class UnetDeconv(BaseNetwork):
 
         del X_train, y_train, X_test, y_test
         gc.collect()
-        print("Pre fit_generator: ", psutil.Process().memory_info().rss / 2 ** 30)
 
 
         self.model.fit_generator(self.train_generator(base_path, number_batches, "train"),
