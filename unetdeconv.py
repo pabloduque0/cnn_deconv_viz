@@ -45,121 +45,223 @@ class UnetDeconv(BaseNetwork):
 
         inputs = layers.Input(shape=img_shape)
 
-        conv1 = layers.Conv2D(64, kernel_size=5, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(inputs)
-        conv2 = layers.Conv2D(64, kernel_size=5, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(conv1)
-        maxpool1, switches_mask1 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv2)
+        conv1_layer = layers.Conv2D(64, kernel_size=5, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv1 = conv1_layer(inputs)
+        conv2_layer = layers.Conv2D(64, kernel_size=5, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv2 = conv2_layer(conv1)
+        maxpool1_layer = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))
+        maxpool1, switches_mask1 = maxpool1_layer(conv2)
 
-        conv3 = layers.Conv2D(96, kernel_size=3, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(maxpool1)
-        conv4 = layers.Conv2D(96, kernel_size=3, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(conv3)
-        maxpool2, switches_mask2 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv4)
+        conv3_layer = layers.Conv2D(96, kernel_size=5, padding='same',
+                      kernel_initializer='he_normal', activation='relu')
+        conv3 = conv3_layer(maxpool1)
+        conv4_layer = layers.Conv2D(96, kernel_size=5, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv4 = conv4_layer(conv3)
+        maxpool2_layer = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))
+        maxpool2, switches_mask2 = maxpool2_layer(conv4)
 
-        conv5 = layers.Conv2D(128, kernel_size=3, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(maxpool2)
-        conv6 = layers.Conv2D(128, kernel_size=3, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(conv5)
-        maxpool3, switches_mask3 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv6)
+        conv5_layer = layers.Conv2D(128, kernel_size=5, padding='same',
+                      kernel_initializer='he_normal', activation='relu')
+        conv5 = conv5_layer(maxpool2)
+        conv6_layer = layers.Conv2D(128, kernel_size=5, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv6 = conv6_layer(conv5)
+        maxpool3_layer = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))
+        maxpool3, switches_mask3 = maxpool3_layer(conv6)
 
-        conv7 = layers.Conv2D(256, kernel_size=3, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(maxpool3)
-        conv8 = layers.Conv2D(256, kernel_size=4, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(conv7)
-        maxpool4, switches_mask4 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv8)
+        conv7_layer = layers.Conv2D(256, kernel_size=3, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv7 = conv7_layer(maxpool3)
+        conv8_layer = layers.Conv2D(256, kernel_size=3, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv8 = conv8_layer(conv7)
+        maxpool4_layer = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))
+        maxpool4, switches_mask4 = maxpool4_layer(conv8)
 
-        conv9 = layers.Conv2D(512, kernel_size=3, padding='same',
-                              kernel_initializer='he_normal', activation='relu')(maxpool4)
-        conv10 = layers.Conv2D(512, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(conv9)
+        conv9_layer = layers.Conv2D(512, kernel_size=3, padding='same',
+                              kernel_initializer='he_normal', activation='relu')
+        conv9 = conv9_layer(maxpool4)
+        conv10_layer = layers.Conv2D(512, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv10 = conv10_layer(conv9)
 
-        up_conv10 = layers.UpSampling2D(size=(2, 2))(conv10)
-        up_samp1 = layers.concatenate([conv8, up_conv10], axis=concat_axis)
+        up_samp1_layer = layers.UpSampling2D(size=(2, 2))
+        up_samp1 = up_samp1_layer(conv10)
+        conv11_layer = layers.Conv2D(256, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv11 = conv11_layer(up_samp1)
+        concat1 = layers.concatenate([conv8, conv11], axis=concat_axis)
 
-        conv12 = layers.Conv2D(256, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(up_samp1)
-        conv13 = layers.Conv2D(256, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(conv12)
+        conv12_layer = layers.Conv2D(256, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv12 = conv12_layer(concat1)
+        conv13_layer = layers.Conv2D(256, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv13 = conv13_layer(conv12)
+        up_samp2_layer = layers.UpSampling2D(size=(2, 2))
+        up_samp2 = up_samp2_layer(conv13)
+        conv14_layer = layers.Conv2D(128, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv14 = conv14_layer(up_samp2)
+        concat2 = layers.concatenate([conv6, conv14], axis=concat_axis)
 
-        up_conv13 = layers.UpSampling2D(size=(2, 2))(conv13)
-        up_samp2 = layers.concatenate([conv6, up_conv13], axis=concat_axis)
+        conv15_layer = layers.Conv2D(128, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv15 = conv15_layer(concat2)
+        conv16_layer = layers.Conv2D(128, kernel_size=3, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv16 = conv16_layer(conv15)
 
-        conv15 = layers.Conv2D(128, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(up_samp2)
-        conv16 = layers.Conv2D(128, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(conv15)
+        up_samp3_layer = layers.UpSampling2D(size=(2, 2))
+        up_samp3 = up_samp3_layer(conv16)
+        conv17_layer = layers.Conv2D(96, kernel_size=5, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv17 = conv17_layer(up_samp3)
+        concat3 = layers.concatenate([conv4, conv17], axis=concat_axis)
 
-        up_conv16 = layers.UpSampling2D(size=(2, 2))(conv16)
-        up_samp3 = layers.concatenate([conv4, up_conv16], axis=concat_axis)
+        conv18_layer = layers.Conv2D(96, kernel_size=5, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv18 = conv18_layer(concat3)
+        conv19_layer = layers.Conv2D(96, kernel_size=5, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv19 = conv19_layer(conv18)
 
-        conv18 = layers.Conv2D(96, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(up_samp3)
-        conv19 = layers.Conv2D(96, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(conv18)
+        up_samp4_layer = layers.UpSampling2D(size=(2, 2))
+        up_samp4 = up_samp4_layer(conv19)
+        conv20_layer = layers.Conv2D(64, kernel_size=5, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv20 = conv20_layer(up_samp4)
+        concat4 = layers.concatenate([conv2, conv20], axis=concat_axis)
 
-        up_conv19 = layers.UpSampling2D(size=(2, 2))(conv19)
-        up_samp4 = layers.concatenate([conv2, up_conv19], axis=concat_axis)
-
-        conv21 = layers.Conv2D(64, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(up_samp4)
-        conv22 = layers.Conv2D(64, kernel_size=3, padding='same',
-                               kernel_initializer='he_normal', activation='relu')(conv21)
+        conv21_layer = layers.Conv2D(64, kernel_size=5, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv21 = conv21_layer(concat4)
+        conv22_layer = layers.Conv2D(64, kernel_size=5, padding='same',
+                               kernel_initializer='he_normal', activation='relu')
+        conv22 = conv22_layer(conv21)
 
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same',
                                kernel_initializer='he_normal', activation='sigmoid')(conv22)
+        """
+        deconv_comb_layer_8 = self.reverse_layer_path(conv22,
+                                [switches_mask1, switches_mask2, switches_mask3, switches_mask4][::-1],
+                                filters_up=[64, 64, 96, 96, 128, 128, 256, 256, 512, 512][::-1],
+                                filters_down=[256, 256, 128, 128, 96, 96, 64, 64][::-1],
+                                kernel_sizes=[5, 5, 5, 5, 5, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3][::-1],
+                                upsamp_sizes=(2,2))
+        """
+        layers_toreverse = [conv22, conv19, conv16, conv13, conv10, conv8, conv6, conv4, conv2]
+        all_switches = [switches_mask4, switches_mask3, switches_mask2, switches_mask1]
+        conv_layers_down = [conv22_layer, conv21_layer, conv20_layer, conv19_layer, conv18_layer, conv17_layer, conv16_layer,
+                       conv15_layer, conv14_layer, conv13_layer, conv12_layer, conv11_layer]
+        conv_layers_up = [conv10_layer, conv9_layer, conv8_layer, conv7_layer, conv6_layer, conv5_layer,
+                          conv4_layer, conv3_layer, conv2_layer, conv1_layer]
+        upsamp_layers = [up_samp4_layer, up_samp3_layer, up_samp2_layer, up_samp1_layer]
 
-        deconv_10 = layers.Conv2DTranspose(512, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(conv10)
-        deconv_09 = layers.Conv2DTranspose(512, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(deconv_10)
-
-        unpool_04 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                            arguments={"poolsize": (2, 2), "argmax": switches_mask4},
-                            output_shape=K.int_shape(switches_mask4)[1:])(deconv_09)
-
-        deconv_08 = layers.Conv2DTranspose(256, kernel_size=4, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(unpool_04)
-        deconv_07 = layers.Conv2DTranspose(256, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(deconv_08)
-
-        unpool_03 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                  arguments={"poolsize": (2, 2), "argmax": switches_mask3},
-                                  output_shape=K.int_shape(switches_mask3)[1:])(deconv_07)
-
-        deconv_06 = layers.Conv2DTranspose(128, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(unpool_03)
-        deconv_05 = layers.Conv2DTranspose(128, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(deconv_06)
-
-        unpool_02 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                  arguments={"poolsize": (2, 2), "argmax": switches_mask2},
-                                  output_shape=K.int_shape(switches_mask2)[1:])(deconv_05)
-
-        deconv_04 = layers.Conv2DTranspose(96, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(unpool_02)
-        deconv_03 = layers.Conv2DTranspose(96, kernel_size=3, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(deconv_04)
-
-        unpool_01 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                  arguments={"poolsize": (2, 2), "argmax": switches_mask1},
-                                  output_shape=K.int_shape(switches_mask1)[1:])(deconv_03)
-
-        deconv_02 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(unpool_01)
-        deconv_01 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
-                                           kernel_initializer='he_normal', activation='relu')(deconv_02)
+        reversed_layers = self.reverse_all_layers(layers_toreverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers)
 
         model = models.Model(inputs=inputs, outputs=conv23)
-
-        deconv_model = models.Model(inputs=inputs, outputs=deconv_01)
+        deconv_model = models.Model(inputs=inputs, outputs=reversed_layers)
+        deconv_model.summary()
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
-                                                                                 ground_truth_sum])
+                                                                                 ground_truth_sum, recall])
         model.summary()
 
         return model, deconv_model
+
+
+    def reverse_all_layers(self, layers_to_reverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers):
+
+        reversed_layers = []
+        number_ksizes_down = len(conv_layers_down)
+        for index, layer_tr in enumerate(layers_to_reverse):
+            switches_list = all_switches[max(index - 4, 0):]
+            filters_up = [conv_layer.filters for conv_layer in conv_layers_up[max((index * 2) - 12, 0):]]
+            filters_down = [conv_layer.filters for conv_layer in conv_layers_down[index * 3:12]]
+            kernel_sizes = [conv_layer.kernel_size for conv_layer in conv_layers_down[index*3:] + conv_layers_up[max((index - 4) * 2, 0):]]
+            upsamp_size = [layer.size for layer in upsamp_layers[max(index - 4, 0):]]
+            print("Set of params")
+            print("switches_list ", len(switches_list))
+            print("filters_up : ", len(filters_up))
+            print("filters_down : ", len(filters_down))
+            print("kernel_sizes : ", len(conv_layers_down[index*3:]), len(conv_layers_up[max((index - 4) * 2, 0):]), len(kernel_sizes))
+            print("upsamp_size : ", len(upsamp_size), "\n")
+            reversed_layer = self.reverse_layer_path(layer_tr, switches_list, filters_up,
+                                                     filters_down, kernel_sizes,
+                                                     upsamp_size)
+            reversed_layers.append(reversed_layer)
+
+        return reversed_layers
+
+
+    def reverse_layer_path(self, input_layer, switches_list, filters_up,
+                           filters_down, kernel_sizes, upsamp_sizes):
+
+        k_size_counter = 0
+
+        for index in range(0, len(filters_down)//3):
+
+            input_layer = layers.Conv2DTranspose(filters_down[index],
+                                                 kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu')(input_layer)
+            k_size_counter += 1
+            input_layer = layers.Conv2DTranspose(filters_down[index + 1],
+                                                 kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu')(input_layer)
+            k_size_counter += 1
+
+            input_layer = layers.Conv2DTranspose(filters_down[index + 2],
+                                                 kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu')(input_layer)
+            k_size_counter += 1
+
+            input_layer = layers.Lambda(custom_layers.reverse_upconcat,
+                                        arguments={
+                                                   "height_factor": upsamp_sizes[index][0]/upsamp_sizes[index][0]**2,
+                                                   "width_factor": upsamp_sizes[index][1]/upsamp_sizes[index][1]**2},
+                                        output_shape=custom_layers.reverse_upconcat_output_shape(
+                                            K.int_shape(input_layer),
+                                            upsamp_sizes[index][0] /
+                                            upsamp_sizes[index][0] ** 2,
+                                            upsamp_sizes[index][1] /
+                                            upsamp_sizes[index][1] ** 2)
+                                        )(input_layer)
+
+
+        for index, switches in enumerate(switches_list):
+
+            input_layer = layers.Conv2DTranspose(filters_up[index], kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu')(input_layer)
+            k_size_counter += 1
+            print("index switch: ", index, "  k_size_counter", k_size_counter)
+            input_layer = layers.Conv2DTranspose(filters_up[index + 1], kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu')(input_layer)
+            k_size_counter += 1
+            input_layer = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                      arguments={"poolsize": (2, 2), "argmax": switches},
+                                      output_shape=K.int_shape(switches)[1:])(input_layer)
+
+
+        second_last_deconv = layers.Conv2DTranspose(filters_up[-2], kernel_size=kernel_sizes[k_size_counter],
+                                                    padding='same', kernel_initializer='he_normal',
+                                                    activation='relu')(input_layer)
+        last_deconv = layers.Conv2DTranspose(filters_up[-1], kernel_size=kernel_sizes[k_size_counter],
+                                             padding='same', kernel_initializer='he_normal',
+                                             activation='relu')(second_last_deconv)
+
+        return last_deconv
+
+
 
 
     def train(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
@@ -202,7 +304,50 @@ class UnetDeconv(BaseNetwork):
                        validation_data=(X_test, y_test),
                        verbose=1)
 
-
+    """
+    
+    deconv_10 = layers.Conv2DTranspose(512, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(conv10)
+            deconv_09 = layers.Conv2DTranspose(512, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(deconv_10)
+    
+            unpool_04 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                arguments={"poolsize": (2, 2), "argmax": switches_mask4},
+                                output_shape=K.int_shape(switches_mask4)[1:])(deconv_09)
+    
+            deconv_08 = layers.Conv2DTranspose(256, kernel_size=4, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(unpool_04)
+            deconv_07 = layers.Conv2DTranspose(256, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(deconv_08)
+    
+            unpool_03 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                      arguments={"poolsize": (2, 2), "argmax": switches_mask3},
+                                      output_shape=K.int_shape(switches_mask3)[1:])(deconv_07)
+    
+            deconv_06 = layers.Conv2DTranspose(128, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(unpool_03)
+            deconv_05 = layers.Conv2DTranspose(128, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(deconv_06)
+    
+            unpool_02 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                      arguments={"poolsize": (2, 2), "argmax": switches_mask2},
+                                      output_shape=K.int_shape(switches_mask2)[1:])(deconv_05)
+    
+            deconv_04 = layers.Conv2DTranspose(96, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(unpool_02)
+            deconv_03 = layers.Conv2DTranspose(96, kernel_size=3, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(deconv_04)
+    
+            unpool_01 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                      arguments={"poolsize": (2, 2), "argmax": switches_mask1},
+                                      output_shape=K.int_shape(switches_mask1)[1:])(deconv_03)
+    
+            deconv_02 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(unpool_01)
+            deconv_01 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
+                                               kernel_initializer='he_normal', activation='relu')(deconv_02)
+    
+    """
     def train_with_generator(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
 
         self.create_folders(training_name, base_path, viz_path_flag=True)
