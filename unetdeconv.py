@@ -36,7 +36,7 @@ class UnetDeconv(BaseNetwork):
                              "and deconv model.")
 
         super().__init__(model)
-        self.deconv_model = deconv_model
+        self.deconv_models = deconv_model
 
 
     def create_model(self, img_shape):
@@ -164,33 +164,30 @@ class UnetDeconv(BaseNetwork):
         reversed_layers = self.reverse_all_layers(layers_toreverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers)
 
         model = models.Model(inputs=inputs, outputs=conv23)
-        deconv_model = models.Model(inputs=inputs, outputs=reversed_layers)
-        deconv_model.summary()
+
+        deconv_models = self.generate_deconv_models(inputs, reversed_layers)
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
                                                                                  ground_truth_sum, recall])
         model.summary()
 
-        return model, deconv_model
+        return model, deconv_models
+
+    def generate_deconv_models(self, inputs, reversed_layers):
+        deconv_models = [models.Model(inputs=inputs, outputs=rev_lay) for rev_lay in reversed_layers]
+        return deconv_models
 
 
     def reverse_all_layers(self, layers_to_reverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers):
 
         reversed_layers = []
-        number_ksizes_down = len(conv_layers_down)
         for index, layer_tr in enumerate(layers_to_reverse):
             switches_list = all_switches[max(index - 4, 0):]
             filters_up = [conv_layer.filters for conv_layer in conv_layers_up[max((index * 2) - 12, 0):]]
             filters_down = [conv_layer.filters for conv_layer in conv_layers_down[index * 3:12]]
             kernel_sizes = [conv_layer.kernel_size for conv_layer in conv_layers_down[index*3:] + conv_layers_up[max((index - 4) * 2, 0):]]
             upsamp_size = [layer.size for layer in upsamp_layers[max(index - 4, 0):]]
-            print("Set of params")
-            print("switches_list ", len(switches_list))
-            print("filters_up : ", len(filters_up))
-            print("filters_down : ", len(filters_down))
-            print("kernel_sizes : ", len(conv_layers_down[index*3:]), len(conv_layers_up[max((index - 4) * 2, 0):]), len(kernel_sizes))
-            print("upsamp_size : ", len(upsamp_size), "\n")
             reversed_layer = self.reverse_layer_path(layer_tr, switches_list, filters_up,
                                                      filters_down, kernel_sizes,
                                                      upsamp_size)
@@ -242,7 +239,6 @@ class UnetDeconv(BaseNetwork):
                                                  padding='same', kernel_initializer='he_normal',
                                                  activation='relu')(input_layer)
             k_size_counter += 1
-            print("index switch: ", index, "  k_size_counter", k_size_counter)
             input_layer = layers.Conv2DTranspose(filters_up[index + 1], kernel_size=kernel_sizes[k_size_counter],
                                                  padding='same', kernel_initializer='he_normal',
                                                  activation='relu')(input_layer)
@@ -401,32 +397,26 @@ class UnetDeconv(BaseNetwork):
 
         viz_path = self.full_paths_dict['viz_path']
 
-        all_predictions = self.deconv_model.predict(data, batch_size=batch_size, verbose=1)
+        all_predictions = []
+        for model in self.deconv_models:
+            all_predictions.append(model.predict(data, batch_size=batch_size, verbose=1))
 
-        for index, (original, label) in enumerate(zip(data, labels)):
+        all_predictions = np.asanyarray(all_predictions)
+        all_predictions = np.swapaxes(all_predictions, 0, 1)
+
+        for index, (original, label, predictions) in enumerate(zip(data, labels, all_predictions)):
             complete_path = self.create_viz_folders(viz_path, index, "_image")
             flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
-            cv2.imwrite(complete_path + str(index) + "_original_deconv" + ".png", flair_t1 * 255)
-            cv2.imwrite(complete_path + str(index) + "_label_deconv" + ".png", label * 255)
+            cv2.imwrite(os.path.join(complete_path, str(index) + "_original_deconv" + ".png"), flair_t1 * 255)
+            cv2.imwrite(os.path.join(complete_path, str(index) + "_label_deconv" + ".png"), label * 255)
 
-            for layer_idx, predictions in enumerate(all_predictions):
+            for layer_idx, layer_pred in enumerate(predictions):
                 layer_path = self.create_viz_folders(complete_path, layer_idx, "_layer")
-                for one_pred in predictions:
-                    file_name = layer_path + str(index) + "_deconv_activations_layer_chann_" + str(layer_idx) + ".png"
-                    cv2.imwrite(file_name, one_pred[..., layer_idx] * 255)
+                for channel in range(layer_pred.shape[-1]):
+                    file_name = "deconv_activations_layer_chann_" + str(channel) + ".png"
+                    full_path = os.path.join(layer_path, file_name)
+                    cv2.imwrite(full_path, layer_pred[..., channel] * 255)
 
-        """
-        for layer_idx, predictions in enumerate(all_predictions):
-            complete_path = self.create_layer_folder(viz_path, layer_idx)
-            for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-                flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
-                cv2.imwrite(complete_path + str(index) + '_original_deconv_activations_layer' + '.png', flair_t1 * 255)
-                cv2.imwrite(complete_path + str(index) + '_label_deconv_activations_layer' + '.png', label * 255)
-                for channel in range(pred.shape[-1]):
-                    file_name = complete_path + str(index) + '_deconv_activations_layer_' + "chan_" + str(channel) + '.png'
-                    cv2.imwrite(file_name, pred[:, :, channel] * 255)
-
-        """
 
 
     def create_viz_folders(self, viz_path, index, suffix):
