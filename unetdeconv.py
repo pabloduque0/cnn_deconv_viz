@@ -300,50 +300,7 @@ class UnetDeconv(BaseNetwork):
                        validation_data=(X_test, y_test),
                        verbose=1)
 
-    """
-    
-    deconv_10 = layers.Conv2DTranspose(512, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(conv10)
-            deconv_09 = layers.Conv2DTranspose(512, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(deconv_10)
-    
-            unpool_04 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                arguments={"poolsize": (2, 2), "argmax": switches_mask4},
-                                output_shape=K.int_shape(switches_mask4)[1:])(deconv_09)
-    
-            deconv_08 = layers.Conv2DTranspose(256, kernel_size=4, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(unpool_04)
-            deconv_07 = layers.Conv2DTranspose(256, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(deconv_08)
-    
-            unpool_03 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                      arguments={"poolsize": (2, 2), "argmax": switches_mask3},
-                                      output_shape=K.int_shape(switches_mask3)[1:])(deconv_07)
-    
-            deconv_06 = layers.Conv2DTranspose(128, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(unpool_03)
-            deconv_05 = layers.Conv2DTranspose(128, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(deconv_06)
-    
-            unpool_02 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                      arguments={"poolsize": (2, 2), "argmax": switches_mask2},
-                                      output_shape=K.int_shape(switches_mask2)[1:])(deconv_05)
-    
-            deconv_04 = layers.Conv2DTranspose(96, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(unpool_02)
-            deconv_03 = layers.Conv2DTranspose(96, kernel_size=3, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(deconv_04)
-    
-            unpool_01 = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                      arguments={"poolsize": (2, 2), "argmax": switches_mask1},
-                                      output_shape=K.int_shape(switches_mask1)[1:])(deconv_03)
-    
-            deconv_02 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(unpool_01)
-            deconv_01 = layers.Conv2DTranspose(64, kernel_size=5, padding='same',
-                                               kernel_initializer='he_normal', activation='relu')(deconv_02)
-    
-    """
+
     def train_with_generator(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
 
         self.create_folders(training_name, base_path, viz_path_flag=True)
