@@ -178,5 +178,6 @@ unet.predict_and_save(validation_data, validation_labels)
 VISUALIZING
 
 """
-
-#unet.visualize_activations(data_train, labels_train, batch_size=30)
+del data_train, labels_train, test_size, training_name
+gc.collect()
+unet.visualize_activations(validation_data, validation_labels, batch_size=30)
