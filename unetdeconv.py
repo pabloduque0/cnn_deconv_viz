@@ -343,11 +343,15 @@ class UnetDeconv(BaseNetwork):
                        verbose=1)
 
 
-    def visualize_activations(self, data, labels, batch_size=1):
+    def save_visualize_activations(self, data, labels, batch_size=1):
 
+        selected_data, selected_labels = zip(*[[x, y] for x, y in sorted(zip(data, labels),
+                                                                        key=lambda pair: len(np.nonzero(np.ravel(pair[1]))),
+                                                                        reverse=True)])
+        selected_data, selected_labels = selected_data[:10], selected_labels[:10]
         viz_path = self.full_paths_dict['viz_path']
 
-        for index, (original, label) in enumerate(zip(data, labels)):
+        for index, (original, label) in enumerate(zip(selected_data, selected_labels)):
             complete_path = self.create_viz_folders(viz_path, index, "_image")
             flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
             cv2.imwrite(os.path.join(complete_path, str(index) + "_original_deconv" + ".png"), flair_t1 * 255)
