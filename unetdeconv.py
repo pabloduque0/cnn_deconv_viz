@@ -145,14 +145,7 @@ class UnetDeconv(BaseNetwork):
 
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same',
                                kernel_initializer='he_normal', activation='sigmoid')(conv22)
-        """
-        deconv_comb_layer_8 = self.reverse_layer_path(conv22,
-                                [switches_mask1, switches_mask2, switches_mask3, switches_mask4][::-1],
-                                filters_up=[64, 64, 96, 96, 128, 128, 256, 256, 512, 512][::-1],
-                                filters_down=[256, 256, 128, 128, 96, 96, 64, 64][::-1],
-                                kernel_sizes=[5, 5, 5, 5, 5, 3, 3, 4, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3][::-1],
-                                upsamp_sizes=(2,2))
-        """
+
         layers_toreverse = [conv22, conv19, conv16, conv13, conv10, conv8, conv6, conv4, conv2]
         all_switches = [switches_mask4, switches_mask3, switches_mask2, switches_mask1]
         conv_layers_down = [conv22_layer, conv21_layer, conv20_layer, conv19_layer, conv18_layer, conv17_layer, conv16_layer,
