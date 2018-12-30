@@ -21,7 +21,7 @@ def segmentation_recall(y_true, y_pred):
     y_true_f = K.flatten(y_true)
     y_pred_f = K.flatten(y_pred)
 
-    recall = K.sum(y_pred_f * y_true_f) / tf.cast(tf.sum(y_true_f), tf.float32)
+    recall = K.sum(y_pred_f * y_true_f) / tf.cast(K.sum(y_true_f), tf.float32)
     return recall
 
 
