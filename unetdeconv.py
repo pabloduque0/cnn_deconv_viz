@@ -354,20 +354,15 @@ class UnetDeconv(BaseNetwork):
 
         viz_path = self.full_paths_dict['viz_path']
 
-        all_predictions = []
-        for model in self.deconv_models:
-            all_predictions.append(model.predict(data, batch_size=batch_size, verbose=1))
-
-        all_predictions = np.asanyarray(all_predictions)
-        all_predictions = np.swapaxes(all_predictions, 0, 1)
-
-        for index, (original, label, predictions) in enumerate(zip(data, labels, all_predictions)):
+        for index, (original, label) in enumerate(zip(data, labels)):
             complete_path = self.create_viz_folders(viz_path, index, "_image")
             flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
             cv2.imwrite(os.path.join(complete_path, str(index) + "_original_deconv" + ".png"), flair_t1 * 255)
             cv2.imwrite(os.path.join(complete_path, str(index) + "_label_deconv" + ".png"), label * 255)
-
-            for layer_idx, layer_pred in enumerate(predictions):
+            original = np.expand_dims(original, 0)
+            for layer_idx in range(len(self.deconv_models)):
+                layer_pred = self.deconv_models[layer_idx].predict(original, batch_size=batch_size, verbose=1)
+                layer_pred = np.squeeze(layer_pred, axis=0)
                 layer_path = self.create_viz_folders(complete_path, layer_idx, "_layer")
                 for channel in range(layer_pred.shape[-1]):
                     file_name = "deconv_activations_layer_chann_" + str(channel) + ".png"
