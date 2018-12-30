@@ -201,11 +201,10 @@ class BaseNetwork():
     def predict_and_save(self, data, labels, batch_size=1):
 
         output_path = self.full_paths_dict['output_path']
-
         predictions = self.model.predict(data, batch_size=batch_size, verbose=1)
 
+        print("Saving output image from validation...")
         for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
-            print(len(np.flatnonzero(pred)))
             cv2.imwrite(output_path + 'original_' + str(index) + '.png',
                         np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1) * 255)
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
