@@ -346,7 +346,7 @@ class UnetDeconv(BaseNetwork):
     def save_visualize_activations(self, data, labels, batch_size=1):
 
         selected_data, selected_labels = zip(*[[x, y] for x, y in sorted(zip(data, labels),
-                                                                        key=lambda pair: len(np.nonzero(np.ravel(pair[1]))),
+                                                                        key=lambda pair: len(np.nonzero(np.ravel(pair[1]))[0]),
                                                                         reverse=True)])
         selected_data, selected_labels = selected_data[:10], selected_labels[:10]
         viz_path = self.full_paths_dict['viz_path']
