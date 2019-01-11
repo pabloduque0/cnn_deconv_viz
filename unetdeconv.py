@@ -253,7 +253,7 @@ class UnetDeconv(BaseNetwork):
 
 
 
-    def train(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
+    def train(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
 
         self.create_folders(training_name, base_path, viz_path_flag=True)
 
@@ -270,31 +270,23 @@ class UnetDeconv(BaseNetwork):
                                            embeddings_layer_names=None,
                                            embeddings_metadata=None)
 
-        X_train, X_test, y_train, y_test = train_test_split(X,
-                                                            y,
-                                                            test_size=test_size)
-
-        del X, y
-        gc.collect()
-
         fit_specs = {
             'epochs': epochs,
-            'batch_size': batch_size,
-            'test_size': test_size
+            'batch_size': batch_size
 
         }
         self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
 
-        self.model.fit(X_train, y_train,
+        self.model.fit(X, y,
                        batch_size=batch_size,
                        callbacks=[checkpointer, tensorboard_callback],
                        epochs=epochs,
-                       validation_data=(X_test, y_test),
+                       validation_data=validation_data,
                        verbose=1)
 
 
-    def train_with_generator(self, X, y, test_size, training_name, base_path, epochs=10, batch_size=32):
+    def train_with_generator(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
 
         self.create_folders(training_name, base_path, viz_path_flag=True)
 
@@ -313,26 +305,13 @@ class UnetDeconv(BaseNetwork):
 
         fit_specs = {
             'epochs': epochs,
-            'batch_size': batch_size,
-            'test_size': test_size
+            'batch_size': batch_size
 
         }
         self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
-        X_train, X_test, y_train, y_test = train_test_split(X,
-                                                            y,
-                                                            test_size=test_size)
-
-        del X, y
-        gc.collect()
-
-
-        number_batches = self.save_batch_files(X_train, y_train, base_path, batch_size, "train")
-        _ = self.save_batch_files(X_test, y_test, base_path, batch_size, "test")
-
-        del X_train, y_train, X_test, y_test
-        gc.collect()
-
+        number_batches = self.save_batch_files(X, y, base_path, batch_size, "train")
+        _ = self.save_batch_files(validation_data[0], validation_data[1], base_path, batch_size, "test")
 
         self.model.fit_generator(self.train_generator(base_path, number_batches, "train"),
                        steps_per_epoch=1,
