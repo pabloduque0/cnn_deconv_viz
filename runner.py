@@ -129,8 +129,6 @@ all_data = np.concatenate([data_t1, data_flair], axis=3)
 del data_t1
 del data_flair
 
-
-
 gc.collect()
 '''
 
@@ -138,37 +136,35 @@ AUGMENTATION
 
 
 '''
+
+data_train, test_data, labels_train, test_labels = train_test_split(all_data, final_label_imgs, test_size=0.15)
+
+data_train, validation_data, labels_train, validation_labels = train_test_split(data_train, labels_train, test_size=0.04)
+
 augmentator = ImageAugmentator()
-data_augmented, labels_agumented = augmentator.perform_all_augmentations(all_data, final_label_imgs)
+data_augmented, labels_agumented = augmentator.perform_all_augmentations(data_train, labels_train)
 
-data_train, validation_data, labels_train, validation_labels = train_test_split(data_augmented, labels_agumented, test_size=0.05)
-
+data_train = np.asanyarray(data_augmented)
+labels_train = np.asanyarray(labels_agumented)
 del data_augmented, labels_agumented
-data_train = np.asanyarray(data_train)
-labels_train = np.asanyarray(labels_train)
-
 '''
 
 TRAINING
 
 '''
 gc.collect()
-
-training_name = 'deconv_test1'
+training_name = 'test_new_split'
 base_path = '/harddrive/home/pablo/Google Drive/UNED/TFM/cnn_deconv_viz'
-test_size = 0.3
 
-print(data_train.shape, labels_train.shape)
-
-unet = UnetDeconv(img_shape=data_train.shape[1:])
-unet.train_with_generator(data_train, labels_train, test_size, training_name, base_path, epochs=1, batch_size=30)
+print(data_train.shape, labels_train.shape, test_data.shape, test_labels.shape)
+unet = OldUnet(img_shape=data_train.shape[1:])
+unet.train(data_train, labels_train, (test_data, test_labels), training_name, base_path, epochs=1, batch_size=30)
 
 '''
 
 VALIDATING
 
 '''
-
 validation_data = np.asanyarray(validation_data)
 validation_labels = np.asanyarray(validation_labels)
 unet.predict_and_save(validation_data, validation_labels)
@@ -178,6 +174,6 @@ unet.predict_and_save(validation_data, validation_labels)
 VISUALIZING
 
 """
-del data_train, labels_train, test_size, training_name
+del data_train, labels_train, training_name
 gc.collect()
-unet.visualize_activations(validation_data, validation_labels, batch_size=30)
+#unet.save_visualize_activations(validation_data, validation_labels, batch_size=30)
