@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from keras.models import load_model
 from keras.optimizers import Adam, SGD
 from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
-    ground_truth_count, ground_truth_sum, predicted_sum, recall
+    ground_truth_count, ground_truth_sum, predicted_sum, recall, custom_dice_coef, custom_dice_loss
 from keras.losses import binary_crossentropy
 import cv2
 import numpy as np
@@ -93,7 +93,7 @@ class Unet(BaseNetwork):
 
         model.compile(optimizer=Adam(lr=2e-5), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
-                                                                                 ground_truth_sum, recall])
+                                                                                 ground_truth_sum, recall, custom_dice_coef, custom_dice_loss])
         model.summary()
 
         return model
