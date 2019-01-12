@@ -2,6 +2,21 @@ from keras import backend as K
 import tensorflow as tf
 import numpy as np
 
+def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.5):
+    regular_dice = dice_coefficient(y_true, y_pred)
+    conn_comp_true = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_true, axis=[-1]), tf.bool))
+    conn_comp_pred = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_pred, axis=[-1]), tf.bool))
+
+    n_conn_comp_true, _ = tf.unique(K.flatten(conn_comp_true))
+    n_conn_comp_pred, _ = tf.unique(K.flatten(conn_comp_pred))
+    conn_comp_ratio = tf.size(n_conn_comp_pred) / tf.size(n_conn_comp_true)
+
+    return regular_dice + (tf.cast(conn_comp_ratio, tf.float32) * regular_dice * conn_comp_weight)
+
+
+def custom_dice_coefficient_loss(y_true, y_pred):
+    return -custom_dice_coefficient(y_true, y_pred)
+
 
 def dice_coefficient(y_true, y_pred, smooth=0.1):
     y_true_f = K.flatten(y_true)
@@ -55,6 +70,8 @@ def label_sum(y_true, y_pred):
     return tf.reduce_sum(y_true)
 
 
+custom_dice_coef = custom_dice_coefficient
+custom_dice_loss = custom_dice_coefficient_loss
 dice_coef = dice_coefficient
 dice_coef_loss = dice_coefficient_loss
 
