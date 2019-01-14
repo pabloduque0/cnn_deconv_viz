@@ -2,7 +2,7 @@ from keras import backend as K
 import tensorflow as tf
 import numpy as np
 
-def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.5):
+def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
     regular_dice = dice_coefficient(y_true, y_pred)
     conn_comp_true = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_true, axis=[-1]), tf.bool))
     conn_comp_pred = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_pred, axis=[-1]), tf.bool))
