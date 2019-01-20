@@ -72,6 +72,16 @@ class ImageParser():
         return images
 
 
+    def remove_top_bot_slices(self, dataset, n_slices, remove_n_top=4, remove_n_bot=6):
+
+        if not isinstance(dataset, np.ndarray):
+            dataset = np.asanyarray(dataset)
+        output_images = []
+        for idx in range(dataset.shape[0] // n_slices):
+            output_images.append(dataset[idx*n_slices + remove_n_bot : idx*(n_slices+1) - remove_n_top, ...])
+        return np.squeeze(np.asanyarray(output_images), axis=0)
+
+
     def process_all_images_np(self, paths_list, slice_shape, normalization=True):
         images = []
         for path in paths_list:
