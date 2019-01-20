@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import subprocess
 from scipy.stats import norm
+from constants import *
 import matplotlib.pyplot as plt
 
 class ImageParser():
@@ -72,7 +73,7 @@ class ImageParser():
         return images
 
 
-    def remove_top_bot_slices(self, dataset, n_slices, remove_n_top=4, remove_n_bot=6):
+    def remove_top_bot_slices(self, dataset, n_slices, remove_n_top=REMOVE_TOP, remove_n_bot=REMOVE_BOT):
 
         if not isinstance(dataset, np.ndarray):
             dataset = np.asanyarray(dataset)
@@ -324,11 +325,6 @@ class ImageParser():
             for flair, t1 in zip(flair_norm1, t1_norm1):
                 cv2.imshow("Flair-T1", np.concatenate([flair, t1], axis=1))
                 cv2.waitKey(0)
-
-    def gauss_normalize(self, images_list):
-
-        np_list = np.concatenate(images_list, axis=1)
-        mean, std = norm.fit(data)
 
 
     def remove_third_label(self, labels_list):
