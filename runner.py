@@ -6,9 +6,8 @@ from imageparser import ImageParser
 from imageaugmentator import ImageAugmentator
 from sklearn.model_selection import train_test_split
 import cv2
-import sys
+from constants import *
 import gc
-
 
 parser = ImageParser()
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
@@ -25,7 +24,7 @@ t1_amsterdam = [row[1] for row in amsterdam_dataset]
 flair_amsterdam = [row[2] for row in amsterdam_dataset]
 labels_amsterdam = [row[0] for row in amsterdam_dataset]
 
-slice_shape = (240, 240)
+slice_shape = SLICE_SHAPE
 
 print('Utrecht: ', len(t1_utrecht), len(flair_utrecht), len(labels_utrecht))
 print('Singapore: ', len(t1_singapore), len(flair_singapore), len(labels_singapore))
@@ -38,22 +37,25 @@ T1 DATA
 '''
 utrecht_data_t1 = parser.get_all_images_np_twod(t1_utrecht)
 utrecht_resized_t1 = parser.resize_slices(utrecht_data_t1, slice_shape)
-utrecht_normalized_t1 = parser.normalize_minmax(utrecht_resized_t1, 48)
-utrecht_normalized_t1 = parser.remove_top_bot_slices(utrecht_normalized_t1, 48)
+utrecht_resized_t1 = parser.remove_top_bot_slices(utrecht_resized_t1, UTRECH_N_SLICES)
+utrecht_normalized_t1 = parser.normalize_minmax(utrecht_resized_t1,
+                                                UTRECH_N_SLICES - REMOVE_TOP - REMOVE_BOT)
 
 del utrecht_data_t1, utrecht_resized_t1, t1_utrecht
 
 singapore_data_t1 = parser.get_all_images_np_twod(t1_singapore)
 singapore_resized_t1 = parser.resize_slices(singapore_data_t1, slice_shape)
-singapore_normalized_t1 = parser.normalize_minmax(singapore_resized_t1, 48)
-singapore_normalized_t1 = parser.remove_top_bot_slices(singapore_normalized_t1, 48)
+singapore_resized_t1 = parser.remove_top_bot_slices(singapore_resized_t1, SINGAPORE_N_SLICES)
+singapore_normalized_t1 = parser.normalize_minmax(singapore_resized_t1,
+                                                  SINGAPORE_N_SLICES - REMOVE_TOP - REMOVE_BOT)
 
 del singapore_data_t1, singapore_resized_t1, t1_singapore
 
 amsterdam_data_t1 = parser.get_all_images_np_twod(t1_amsterdam)
 amsterdam_resized_t1 = parser.resize_slices(amsterdam_data_t1, slice_shape)
-amsterdam_normalized_t1 = parser.normalize_minmax(amsterdam_resized_t1, 83)
-amsterdam_normalized_t1 = parser.remove_top_bot_slices(amsterdam_normalized_t1, 83)
+amsterdam_resized_t1 = parser.remove_top_bot_slices(amsterdam_resized_t1, AMSTERDAM_N_SLICES)
+amsterdam_normalized_t1 = parser.normalize_minmax(amsterdam_resized_t1,
+                                                  AMSTERDAM_N_SLICES - REMOVE_TOP - REMOVE_BOT)
 
 del amsterdam_data_t1, amsterdam_resized_t1, t1_amsterdam
 
@@ -77,6 +79,14 @@ labels_amsterdam_resized = parser.remove_third_label(labels_amsterdam_resized)
 
 del labels_utrecht_imgs, labels_singapore_imgs, labels_amsterdam_imgs
 
+labels_utrecht_resized = parser.remove_top_bot_slices(labels_utrecht_resized, UTRECH_N_SLICES)
+labels_singapore_resized = parser.remove_top_bot_slices(labels_singapore_resized, SINGAPORE_N_SLICES)
+labels_amsterdam_resized = parser.remove_top_bot_slices(labels_amsterdam_resized, AMSTERDAM_N_SLICES)
+
+final_label_imgs = np.concatenate([labels_utrecht_resized,
+                                   labels_singapore_resized,
+                                   labels_amsterdam_resized], axis=0)
+final_label_imgs = np.expand_dims(np.asanyarray(final_label_imgs), axis=3)
 
 '''
 
@@ -86,40 +96,34 @@ FLAIR DATA
 
 utrecht_data_flair = parser.get_all_images_np_twod(flair_utrecht)
 utrecht_resized_flairs = parser.resize_slices(utrecht_data_flair, slice_shape)
-utrecht_normalized_flairs = parser.normalize_quantile(utrecht_resized_flairs, labels_utrecht_resized, 48)
-utrecht_normalized_flairs = parser.remove_top_bot_slices(utrecht_normalized_flairs, 48)
+utrecht_resized_flairs = parser.remove_top_bot_slices(utrecht_resized_flairs, UTRECH_N_SLICES)
+utrecht_normalized_flairs = parser.normalize_quantile(utrecht_resized_flairs, labels_utrecht_resized,
+                                                      UTRECH_N_SLICES - REMOVE_TOP - REMOVE_BOT)
 
 del utrecht_data_flair, utrecht_resized_flairs, flair_utrecht
 
 singapore_data_flair = parser.get_all_images_np_twod(flair_singapore)
 singapore_resized_flairs = parser.resize_slices(singapore_data_flair, slice_shape)
-singapore_normalized_flairs = parser.normalize_quantile(singapore_resized_flairs, labels_singapore_resized, 48)
-singapore_normalized_flairs = parser.remove_top_bot_slices(singapore_normalized_flairs, 48)
+singapore_resized_flairs = parser.remove_top_bot_slices(singapore_resized_flairs, SINGAPORE_N_SLICES)
+singapore_normalized_flairs = parser.normalize_quantile(singapore_resized_flairs, labels_singapore_resized,
+                                                        SINGAPORE_N_SLICES - REMOVE_TOP - REMOVE_BOT)
 
 del singapore_data_flair, singapore_resized_flairs, flair_singapore
 
 amsterdam_data_flair = parser.get_all_images_np_twod(flair_amsterdam)
 amsterdam_resized_flairs = parser.resize_slices(amsterdam_data_flair, slice_shape)
-amsterdam_normalized_flairs = parser.normalize_quantile(amsterdam_resized_flairs, labels_amsterdam_resized, 83)
-amsterdam_normalized_flairs = parser.remove_top_bot_slices(amsterdam_normalized_flairs, 83)
+amsterdam_resized_flairs = parser.remove_top_bot_slices(amsterdam_resized_flairs, AMSTERDAM_N_SLICES)
+amsterdam_normalized_flairs = parser.normalize_quantile(amsterdam_resized_flairs, labels_amsterdam_resized,
+                                                        AMSTERDAM_N_SLICES - REMOVE_TOP - REMOVE_BOT)
+
 
 del amsterdam_data_flair, amsterdam_resized_flairs, flair_amsterdam
-
+del labels_utrecht_resized, labels_singapore_resized, labels_amsterdam_resized
 '''
 
 DATA CONCAT
 
 '''
-
-labels_utrecht_resized = parser.remove_top_bot_slices(labels_utrecht_resized, 48)
-labels_singapore_resized = parser.remove_top_bot_slices(labels_singapore_resized, 48)
-labels_amsterdam_resized = parser.remove_top_bot_slices(labels_amsterdam_resized, 83)
-
-final_label_imgs = np.concatenate([labels_utrecht_resized,
-                                   labels_singapore_resized,
-                                   labels_amsterdam_resized], axis=0)
-final_label_imgs = np.expand_dims(np.asanyarray(final_label_imgs), axis=3)
-del labels_utrecht_resized, labels_singapore_resized, labels_amsterdam_resized
 
 normalized_t1 = np.concatenate([utrecht_normalized_t1,
                                 singapore_normalized_t1,
@@ -140,7 +144,6 @@ del data_t1
 del data_flair
 
 gc.collect()
-
 
 '''
 
