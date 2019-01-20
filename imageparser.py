@@ -80,7 +80,10 @@ class ImageParser():
         output_images = []
         for idx in range(dataset.shape[0] // n_slices):
             output_images.append(dataset[idx*n_slices + remove_n_bot : idx*(n_slices+1) - remove_n_top, ...])
-        return np.squeeze(np.asanyarray(output_images), axis=0)
+
+        output_images = np.asanyarray(output_images)
+        if output_images.shape[0] == 1: output_images = np.squeeze(output_images)
+        return output_images
 
 
     def process_all_images_np(self, paths_list, slice_shape, normalization=True):
