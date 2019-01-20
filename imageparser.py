@@ -77,12 +77,16 @@ class ImageParser():
 
         if not isinstance(dataset, np.ndarray):
             dataset = np.asanyarray(dataset)
-        output_images = []
+
+        output_images = None
         for idx in range(dataset.shape[0] // n_slices):
-            output_images.append(dataset[idx*n_slices + remove_n_bot : idx*(n_slices+1) - remove_n_top, ...])
+            if output_images is None:
+                output_images = dataset[idx*n_slices + remove_n_bot : (idx+1)*n_slices - remove_n_top, ...]
+            else:
+                output_images = np.concatenate([output_images,
+                                                dataset[idx * n_slices + remove_n_bot: (idx + 1) * n_slices - remove_n_top, ...]])
 
         output_images = np.asanyarray(output_images)
-        if output_images.shape[0] == 1: output_images = np.squeeze(output_images)
         return output_images
 
 
