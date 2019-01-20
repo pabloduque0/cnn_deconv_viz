@@ -90,8 +90,8 @@ class ImageAugmentator():
     def apply_mixup(self, non_black_indices, images_x, images_y, alpha=0.4):
 
         idx_group1, idx_group2 = self.make_indices_groups(non_black_indices, 2)
-        if idx_group1 > idx_group2: del idx_group1[-1]
-        if idx_group2 > idx_group1: del idx_group2[-1]
+        if len(idx_group1) > len(idx_group2): del idx_group1[-1]
+        if len(idx_group2) > len(idx_group1): del idx_group2[-1]
 
         output_x = images_x[idx_group1] * alpha + (1 - alpha) * images_x[idx_group2]
         output_y = images_y[idx_group1] * alpha + (1 - alpha) * images_y[idx_group2]
