@@ -75,6 +75,10 @@ class ImageAugmentator():
         del idx_group1, idx_group2, idx_group3, idx_group4, idx_group5
         gc.collect()
 
+        mixedup_x, mixedup_y = self.apply_mixup(non_black_indices, dataset_x, dataset_y)
+        aug_dataset_x = np.concatenate([aug_dataset_x, mixedup_x], axis=0)
+        aug_dataset_y = np.concatenate([aug_dataset_y, mixedup_y], axis=0)
+
         if visualize:
             self.visualize_data_augmentation(dataset_x[non_black_indices],
                                          dataset_y[non_black_indices],
@@ -83,13 +87,25 @@ class ImageAugmentator():
 
         return aug_dataset_x, aug_dataset_y
 
+    def apply_mixup(self, non_black_indices, images_x, images_y, alpha=0.4):
+
+        idx_group1, idx_group2 = self.make_indices_groups(non_black_indices, 2)
+        if idx_group1 > idx_group2: del idx_group1[-1]
+        if idx_group2 > idx_group1: del idx_group2[-1]
+
+        output_x = images_x[idx_group1] * alpha + (1 - alpha) * images_x[idx_group2]
+        output_y = images_y[idx_group1] * alpha + (1 - alpha) * images_y[idx_group2]
+
+        return output_x, output_y
+
+
     def make_indices_groups(self, indices, n_groups):
 
         size_group = len(indices) // n_groups
         list_groups = []
         for i in range(n_groups):
 
-            if i < n_groups-1:
+            if i < n_groups - 1:
                 group = indices[i * size_group : (i+1) * size_group]
             else:
                 group = indices[i * size_group: ]
