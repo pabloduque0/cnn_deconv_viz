@@ -75,10 +75,6 @@ class ImageAugmentator():
         del idx_group1, idx_group2, idx_group3, idx_group4, idx_group5
         gc.collect()
 
-        mixedup_x, mixedup_y = self.apply_mixup(non_black_indices, dataset_x, dataset_y)
-        aug_dataset_x = np.concatenate([aug_dataset_x, mixedup_x], axis=0)
-        aug_dataset_y = np.concatenate([aug_dataset_y, mixedup_y], axis=0)
-
         if visualize:
             self.visualize_data_augmentation(dataset_x[non_black_indices],
                                          dataset_y[non_black_indices],
