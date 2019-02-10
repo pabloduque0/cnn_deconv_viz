@@ -53,16 +53,22 @@ class ImageParser():
                 if file == 'wmh.nii':
                     data_and_labels.append(filepath)
 
-                if '/pre/' in filepath and (file == 'brain_FLAIR.nii' or file == 'brain_T1.nii') and len(
-                        data_and_labels) in (1, 2):
+                if '/pre/' in filepath and self.is_file_desired(file) and len(
+                        data_and_labels) in {1, 2, 3, 4}:
                     data_and_labels.append(filepath)
-                    if len(data_and_labels) == 3:
+                    if len(data_and_labels) == 5:
                         full_dataset.append(list(data_and_labels))
                         print(data_and_labels)
                         data_and_labels.clear()
 
         return full_dataset
 
+    def is_file_desired(self, file_name):
+        possibilities = {"brain_FLAIR.nii",
+                             "brain_T1.nii",
+                             "distWMborder_Danielsson.nii.gz",
+                             "WMmask.nii.gz"}
+        return file_name in possibilities
 
     def get_all_images_itk(self, paths_list):
         images = []
