@@ -170,7 +170,7 @@ TRAINING
 '''
 gc.collect()
 training_name = 'test_new_split'
-base_path = '/harddrive/home/pablo/Google Drive/UNED/TFM/cnn_deconv_viz'
+base_path = os.getcwd()
 
 print(data_train.shape, labels_train.shape, test_data.shape, test_labels.shape)
 unet = OldUnet(img_shape=data_train.shape[1:])
