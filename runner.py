@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 import cv2
 from constants import *
 import gc
+import os
 
 parser = ImageParser()
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
@@ -15,20 +16,27 @@ utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and
 t1_utrecht = [row[1] for row in utrech_dataset]
 flair_utrecht = [row[2] for row in utrech_dataset]
 labels_utrecht = [row[0] for row in utrech_dataset]
+white_mask_utrecht = [row[4] for row in utrech_dataset]
+distance_utrecht = [row[3] for row in utrech_dataset]
 
 t1_singapore = [row[1] for row in singapore_dataset]
 flair_singapore = [row[2] for row in singapore_dataset]
 labels_singapore = [row[0] for row in singapore_dataset]
+white_mask_singapore = [row[4] for row in singapore_dataset]
+distance_singapore = [row[3] for row in singapore_dataset]
 
 t1_amsterdam = [row[1] for row in amsterdam_dataset]
 flair_amsterdam = [row[2] for row in amsterdam_dataset]
 labels_amsterdam = [row[0] for row in amsterdam_dataset]
+white_mask_amsterdam = [row[4] for row in amsterdam_dataset]
+distance_amsterdam = [row[3] for row in amsterdam_dataset]
 
 slice_shape = SLICE_SHAPE
 
 print('Utrecht: ', len(t1_utrecht), len(flair_utrecht), len(labels_utrecht))
 print('Singapore: ', len(t1_singapore), len(flair_singapore), len(labels_singapore))
 print('Amsterdam: ', len(t1_amsterdam), len(flair_amsterdam), len(labels_amsterdam))
+
 
 '''
 
@@ -119,6 +127,32 @@ amsterdam_normalized_flairs = parser.normalize_quantile(amsterdam_resized_flairs
 
 del amsterdam_data_flair, amsterdam_resized_flairs, flair_amsterdam
 del labels_utrecht_resized, labels_singapore_resized, labels_amsterdam_resized
+
+"""
+
+DISTANCES
+
+"""
+utrecht_distances = parser.get_all_images_np_twod(distance_utrecht)
+utrecht_resized_dist = parser.resize_slices(utrecht_distances, slice_shape)
+utrecht_resized_dist = parser.remove_top_bot_slices(utrecht_resized_dist, UTRECH_N_SLICES)
+utrecht_normalized_dist = parser.normalize_minmax(utrecht_resized_dist,
+                                                UTRECH_N_SLICES - REMOVE_TOP - REMOVE_BOT)
+
+
+singapore_distances = parser.get_all_images_np_twod(distance_singapore)
+singapore_resized_dist = parser.resize_slices(singapore_distances, slice_shape)
+singapore_resized_dist = parser.remove_top_bot_slices(singapore_resized_dist, SINGAPORE_N_SLICES)
+singapore_normalized_dist = parser.normalize_minmax(singapore_resized_dist,
+                                                    SINGAPORE_N_SLICES - REMOVE_TOP - REMOVE_BOT)
+
+
+amsterdam_distances = parser.get_all_images_np_twod(distance_amsterdam)
+amsterdam_resized_dist = parser.resize_slices(amsterdam_distances, slice_shape)
+amsterdam_resized_dist = parser.remove_top_bot_slices(amsterdam_resized_dist, AMSTERDAM_N_SLICES)
+amsterdam_normalized_dist = parser.normalize_minmax(amsterdam_resized_dist,
+                                                    AMSTERDAM_N_SLICES - REMOVE_TOP - REMOVE_BOT)
+
 '''
 
 DATA CONCAT
@@ -132,23 +166,27 @@ normalized_flairs = np.concatenate([utrecht_normalized_flairs,
                                     singapore_normalized_flairs,
                                     amsterdam_normalized_flairs], axis=0)
 
+distances = np.concatenate([utrecht_normalized_dist,
+                            singapore_normalized_dist,
+                            amsterdam_normalized_dist], axis=0)
+
 del utrecht_normalized_t1, singapore_normalized_t1, amsterdam_normalized_t1
 del utrecht_normalized_flairs, singapore_normalized_flairs, amsterdam_normalized_flairs
 
 data_t1 = np.expand_dims(np.asanyarray(normalized_t1), axis=3)
 data_flair = np.expand_dims(np.asanyarray(normalized_flairs), axis=3)
+data_distances = np.expand_dims(distances, axis=3)
+all_data = np.concatenate([data_t1, data_flair, data_distances], axis=3)
 
-all_data = np.concatenate([data_t1, data_flair], axis=3)
 
-del data_t1
-del data_flair
+
+del data_t1, data_flair, data_distances
 
 gc.collect()
 
 '''
 
 AUGMENTATION
-
 
 '''
 data_train, test_data, labels_train, test_labels = train_test_split(all_data, final_label_imgs,
