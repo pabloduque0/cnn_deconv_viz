@@ -45,19 +45,20 @@ class ImageParser():
 
     def get_images_and_labels(self, path):
         full_dataset = []
-        data_and_labels = []
+        data_and_labels = {}
 
         for root, dirs, files in os.walk(path):
             for file in files:
                 filepath = root + '/' + file
+                key = self.get_key(file)
                 if file == 'wmh.nii':
-                    data_and_labels.append(filepath)
+                    data_and_labels[key] = filepath
 
                 if '/pre/' in filepath and self.is_file_desired(file) and len(
                         data_and_labels) in {1, 2, 3, 4}:
-                    data_and_labels.append(filepath)
+                    data_and_labels[key] = filepath
                     if len(data_and_labels) == 5:
-                        full_dataset.append(list(data_and_labels))
+                        full_dataset.append(data_and_labels.copy())
                         print(data_and_labels)
                         data_and_labels.clear()
 
@@ -69,6 +70,19 @@ class ImageParser():
                              "distWMborder_Danielsson.nii.gz",
                              "WMmask.nii.gz"}
         return file_name in possibilities
+
+    def get_key(self, file_name):
+
+        possibilities = {"brain_FLAIR.nii": "flair",
+                         "brain_T1.nii": "t1",
+                         "distWMborder_Danielsson.nii.gz": "danielsson_dist",
+                         "WMmask.nii.gz": "mask",
+                         "wmh.nii": "label"}
+
+        if file_name not in possibilities:
+            return None
+
+        return possibilities[file_name]
 
     def get_all_images_itk(self, paths_list):
         images = []
