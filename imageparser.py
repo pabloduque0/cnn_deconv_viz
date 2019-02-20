@@ -323,7 +323,7 @@ class ImageParser():
             stand_image = (this_image - np.mean(this_image)) / np.std(this_image)
             standarized_imgs.append(stand_image)
 
-        standarized_imgs = np.asanyarray(standarized_imgs)
+        standarized_imgs = np.concatenate(standarized_imgs, axis=0)
         return standarized_imgs
 
     def study_intensity_values(self, flair_list, t1_list, labels_list, slice_number):
