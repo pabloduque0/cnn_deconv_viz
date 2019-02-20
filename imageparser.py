@@ -312,6 +312,20 @@ class ImageParser():
 
         return lower_threshold, upper_threshold, upper_indexes, lower_indexes
 
+
+    def standarize(self, image_list, slice_number):
+
+        standarized_imgs = []
+        image_list = np.asanyarray(image_list)
+
+        for image_idx in range(image_list.shape[0] // slice_number):
+            this_image = image_list[image_idx * slice_number:(image_idx + 1) * slice_number, ...]
+            stand_image = (this_image - np.mean(this_image)) / np.std(this_image)
+            standarized_imgs.append(stand_image)
+
+        standarized_imgs = np.asanyarray(standarized_imgs)
+        return standarized_imgs
+
     def study_intensity_values(self, flair_list, t1_list, labels_list, slice_number):
 
         flair_list = np.asanyarray(flair_list)
