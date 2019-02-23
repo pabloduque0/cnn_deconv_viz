@@ -55,9 +55,9 @@ class ImageParser():
                     data_and_labels[key] = filepath
 
                 if '/pre/' in filepath and self.is_file_desired(file) and len(
-                        data_and_labels) in {1, 2, 3, 4}:
+                        data_and_labels) in {1, 2, 3, 4, 5}:
                     data_and_labels[key] = filepath
-                    if len(data_and_labels) == 5:
+                    if len(data_and_labels) == 6:
                         full_dataset.append(data_and_labels.copy())
                         print(data_and_labels)
                         data_and_labels.clear()
@@ -68,7 +68,8 @@ class ImageParser():
         possibilities = {"brain_FLAIR.nii",
                              "brain_T1.nii",
                              "distWMborder_Danielsson.nii.gz",
-                             "WMmask.nii.gz"}
+                             "WMmask.nii.gz",
+                             "FLAIR_enhanced_lb.nii.gz"}
         return file_name in possibilities
 
     def get_key(self, file_name):
@@ -77,7 +78,8 @@ class ImageParser():
                          "brain_T1.nii": "t1",
                          "distWMborder_Danielsson.nii.gz": "danielsson_dist",
                          "WMmask.nii.gz": "mask",
-                         "wmh.nii": "label"}
+                         "wmh.nii": "label",
+                         "FLAIR_enhanced_lb.nii.gz": "enhanced"}
 
         if file_name not in possibilities:
             return None
