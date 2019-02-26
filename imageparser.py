@@ -69,7 +69,7 @@ class ImageParser():
                              "brain_T1.nii",
                              "distWMborder_Danielsson.nii.gz",
                              "WMmask.nii.gz",
-                             "FLAIR_enhanced_lb.nii.gz"}
+                             "brain_FLAIR_enhanced_lb.nii.gz"}
         return file_name in possibilities
 
     def get_key(self, file_name):
@@ -79,7 +79,7 @@ class ImageParser():
                          "distWMborder_Danielsson.nii.gz": "danielsson_dist",
                          "WMmask.nii.gz": "mask",
                          "wmh.nii": "label",
-                         "FLAIR_enhanced_lb.nii.gz": "enhanced"}
+                         "brain_FLAIR_enhanced_lb.nii.gz": "enhanced"}
 
         if file_name not in possibilities:
             return None
@@ -395,6 +395,22 @@ class ImageParser():
                 filepath = root + '/' + file
 
                 if '.nii' in file and file != 'wmh.nii' and 'mask' not in file:
+                    full_command = base_command + filepath + ' ' + root + '/' + brain_str + file
+                    process = subprocess.Popen(full_command.split(), stdout=subprocess.PIPE)
+                    output, error = process.communicate()
+
+                    print('OUTPUT: ', output)
+                    print('ERROR: ', error)
+
+
+    def extract_enhanced_brains(self):
+        base_command = 'bet2 '
+        brain_str = 'brain_'
+        for root, dirs, files in os.walk('../'):
+            for file in files:
+                filepath = root + '/' + file
+
+                if file == "FLAIR_enhanced_lb.nii.gz":
                     full_command = base_command + filepath + ' ' + root + '/' + brain_str + file
                     process = subprocess.Popen(full_command.split(), stdout=subprocess.PIPE)
                     output, error = process.communicate()
