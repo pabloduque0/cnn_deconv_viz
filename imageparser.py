@@ -328,45 +328,39 @@ class ImageParser():
         standarized_imgs = np.concatenate(standarized_imgs, axis=0)
         return standarized_imgs
 
-    def study_intensity_values(self, flair_list, t1_list, labels_list, slice_number):
+    def study_intensity_values(self, flair_list, labels_list, slice_number):
 
         flair_list = np.asanyarray(flair_list)
-        t1_list = np.asanyarray(t1_list)
         labels_list = np.asanyarray(labels_list)
 
         for image_idx in range(flair_list.shape[0] // slice_number):
             this_flair = flair_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
-            this_t1 = t1_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
             this_labels = labels_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
             flair_labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
-            t1_labels_idx = np.where(this_labels[np.where(this_t1 > 0)] > 0.)
 
-            flair_flattened = np.ravel(this_flair)
-            t1_flattened = np.ravel(this_t1)
-            flair_non_black = flair_flattened[flair_flattened > 0]
-            t1_non_black = t1_flattened[t1_flattened > 0]
+            flair_perc = self.normalize_quantile(this_flair, this_labels, slice_number)
+            flair_norm = np.asanyarray(self.normalize_minmax(this_flair, slice_number))
+            flair_perc = np.ravel(flair_perc[flair_perc > 0])
+            flair_norm = np.ravel(flair_norm[flair_norm > 0])
 
-            flair_norm1, flair_norm2 = self.make_both_normalizations(this_flair, flair_non_black, flair_labels_idx)
-            t1_norm1, t1_norm2 = self.make_both_normalizations(this_t1, t1_non_black, t1_labels_idx)
-            """
+            print(np.min(flair_perc), np.max(flair_perc), np.mean(flair_perc),
+                  np.min(flair_norm), np.max(flair_norm), np.mean(flair_norm))
+
             fig, ax = plt.subplots(2, 1)
-            ax[0].hist(flair_norm1, bins=100, label="Norm_percentil", alpha=0.5)
-            ax_2y = ax[0].twinx()
-            ax_2y.hist(flair_norm1[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
-            ax_2y.tick_params('y', colors='r')
+            ax[0].hist(flair_norm, bins=100, label="Norm_percentil", alpha=0.5)
+            #ax_2y = ax[0].twinx()
+            #ax_2y.hist(flair_perc[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
+            #ax_2y.tick_params('y', colors='r')
 
-            mean, std = norm.fit(flair_norm1)
-            mean, std = norm.fit(flair_norm1[flair_labels_idx])
-
-            ax[1].hist(flair_norm2, bins=100, label="Norm_minmax", alpha=0.5)
-            ax2_2y = ax[1].twinx()
-            ax2_2y.hist(flair_norm2[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
-            ax2_2y.tick_params('y', colors='r')
+            ax[1].hist(flair_perc, bins=100, label="Norm_minmax", alpha=0.5)
+            #ax2_2y = ax[1].twinx()
+            #ax2_2y.hist(flair_norm[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
+            #ax2_2y.tick_params('y', colors='r')
 
             plt.show()
-            """
-            for flair, t1 in zip(flair_norm1, t1_norm1):
-                cv2.imshow("Flair-T1", np.concatenate([flair, t1], axis=1))
+
+            for flair, flair2 in zip(flair_perc, flair_norm):
+                cv2.imshow("Flair-T1", np.concatenate([flair, flair2], axis=1))
                 cv2.waitKey(0)
 
 
