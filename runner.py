@@ -14,19 +14,19 @@ parser = ImageParser()
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
 
 t1_utrecht = [row["t1"] for row in utrech_dataset]
-flair_utrecht = [row["enhanced"] for row in utrech_dataset]
+flair_utrecht = [row["flair"] for row in utrech_dataset]
 labels_utrecht = [row["label"] for row in utrech_dataset]
 white_mask_utrecht = [row["mask"] for row in utrech_dataset]
 distance_utrecht = [row["danielsson_dist"] for row in utrech_dataset]
 
 t1_singapore = [row["t1"] for row in singapore_dataset]
-flair_singapore = [row["enhanced"] for row in singapore_dataset]
+flair_singapore = [row["flair"] for row in singapore_dataset]
 labels_singapore = [row["label"] for row in singapore_dataset]
 white_mask_singapore = [row["mask"] for row in singapore_dataset]
 distance_singapore = [row["danielsson_dist"] for row in singapore_dataset]
 
 t1_amsterdam = [row["t1"] for row in amsterdam_dataset]
-flair_amsterdam = [row["enhanced"] for row in amsterdam_dataset]
+flair_amsterdam = [row["flair"] for row in amsterdam_dataset]
 labels_amsterdam = [row["label"] for row in amsterdam_dataset]
 white_mask_amsterdam = [row["mask"] for row in amsterdam_dataset]
 distance_amsterdam = [row["danielsson_dist"] for row in amsterdam_dataset]
