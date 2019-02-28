@@ -85,7 +85,7 @@ class OldUnet(BaseNetwork):
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
-                                                                                 ground_truth_sum, recall, custom_dice_coef, custom_dice_loss])
+                                                                                 ground_truth_sum, recall])
 
         model.summary()
 
