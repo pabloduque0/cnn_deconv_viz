@@ -65,8 +65,8 @@ class ImageParser():
         return full_dataset
 
     def is_file_desired(self, file_name):
-        possibilities = {"brain_FLAIR.nii", "FLAIR.nii.gz",
-                         "brain_T1.nii", "T1.nii.gz",
+        possibilities = {"brain_FLAIR.nii", "FLAIR.nii.gz", "FLAIR.nii"
+                         "brain_T1.nii", "T1.nii.gz", "T1.nii",
                          "distWMborder_Danielsson.nii.gz",
                          "WMmask.nii.gz",
                          "brain_FLAIR_enhanced_lb.nii.gz",
@@ -77,8 +77,10 @@ class ImageParser():
 
         possibilities = {"brain_FLAIR.nii": "flair_brain",
                          "FLAIR.nii.gz": "flair",
+                         "FLAIR.nii": "flair",
                          "brain_T1.nii": "t1_brain",
                          "T1.nii.gz": "t1",
+                         "T1.nii": "t1",
                          "distWMborder_Danielsson.nii.gz": "danielsson_dist",
                          "WMmask.nii.gz": "mask",
                          "wmh.nii": "label",
