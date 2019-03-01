@@ -358,25 +358,26 @@ class ImageParser():
             flair_perc = np.ravel(flair_perc[flair_perc > 0])
             flair_norm = np.ravel(flair_norm[flair_norm > 0])
 
-            print(np.min(flair_perc), np.max(flair_perc), np.mean(flair_perc),
-                  np.min(flair_norm), np.max(flair_norm), np.mean(flair_norm))
-
             fig, ax = plt.subplots(2, 1)
-            ax[0].hist(flair_norm, bins=100, label="Norm_percentil", alpha=0.5)
+            ax[0].hist(flair_norm, bins=100, label="Norm_percentil", color="g", alpha=0.9)
+            ax[0].set_title("Min-max Normalization")
             #ax_2y = ax[0].twinx()
             #ax_2y.hist(flair_perc[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
             #ax_2y.tick_params('y', colors='r')
 
-            ax[1].hist(flair_perc, bins=100, label="Norm_minmax", alpha=0.5)
+            ax[1].hist(flair_perc, bins=100, label="Norm_minmax", color="g", alpha=0.9)
+            ax[1].set_title("Thresholded Normalization")
             #ax2_2y = ax[1].twinx()
             #ax2_2y.hist(flair_norm[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
             #ax2_2y.tick_params('y', colors='r')
-
+            plt.subplots_adjust(hspace=0.4)
             plt.show()
 
+            """
             for flair, flair2 in zip(flair_perc, flair_norm):
                 cv2.imshow("Flair-T1", np.concatenate([flair, flair2], axis=1))
                 cv2.waitKey(0)
+            """
 
 
     def remove_third_label(self, labels_list):
