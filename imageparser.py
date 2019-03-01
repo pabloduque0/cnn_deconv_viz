@@ -12,7 +12,9 @@ import SimpleITK
 
 class ImageParser():
 
-    def __init__(self, path_utrech='../Utrecht', path_singapore='../Singapore', path_amsterdam='../GE3T'):
+    def __init__(self, path_utrech='../Utrecht/subjects',
+                 path_singapore='../Singapore/subjects',
+                 path_amsterdam='../GE3T/subjects'):
         self.path_utrech = path_utrech
         self.path_singapore = path_singapore
         self.path_amsterdam = path_amsterdam
@@ -66,26 +68,32 @@ class ImageParser():
         return full_dataset
 
     def is_file_desired(self, file_name):
-        possibilities = {"brain_FLAIR.nii", "FLAIR.nii.gz", "FLAIR.nii"
-                         "brain_T1.nii", "T1.nii.gz", "T1.nii",
-                         "distWMborder_Danielsson.nii.gz",
-                         "WMmask.nii.gz",
-                         "brain_FLAIR_enhanced_lb.nii.gz",
-                         "FLAIR_enhanced_lb.nii.gz"}
+        possibilities = {"FLAIR_masked.nii.gz",
+                            "FLAIR.nii.gz",
+                            "FLAIR.nii",
+                            "T1_masked.nii.gz",
+                            "T1.nii.gz",
+                            "T1.nii",
+                            "distWMborder_Danielsson.nii.gz",
+                            "distWMborder_Maurer.nii.gz",
+                            "WMmask.nii.gz",
+                            "FLAIR_enhanced_lb_masked.nii.gz",
+                            "FLAIR_enhanced_lb.nii.gz"}
         return file_name in possibilities
 
     def get_key(self, file_name):
 
-        possibilities = {"brain_FLAIR.nii": "flair_brain",
+        possibilities = {"FLAIR_masked.nii.gz": "flair_masked",
                          "FLAIR.nii.gz": "flair",
                          "FLAIR.nii": "flair",
-                         "brain_T1.nii": "t1_brain",
+                         "T1_masked.nii.gz": "t1_masked",
                          "T1.nii.gz": "t1",
                          "T1.nii": "t1",
                          "distWMborder_Danielsson.nii.gz": "danielsson_dist",
+                         "distWMborder_Maurer.nii.gz": "maurer_dist",
                          "WMmask.nii.gz": "mask",
                          "wmh.nii": "label",
-                         "brain_FLAIR_enhanced_lb.nii.gz": "enhanced_brain",
+                         "FLAIR_enhanced_lb_masked.nii.gz": "enhanced_masked",
                          "FLAIR_enhanced_lb.nii.gz": "enhanced"}
 
         if file_name not in possibilities:
