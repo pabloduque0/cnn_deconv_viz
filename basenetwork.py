@@ -189,7 +189,9 @@ class BaseNetwork():
 
         print("Saving output image from validation...")
         for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
+            original = (original - np.min(original)) * 255 / (np.max(original) - np.min(original))
+
             cv2.imwrite(output_path + 'original_' + str(index) + '.png',
-                        np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1) * 255)
+                        np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1))
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
