@@ -44,6 +44,8 @@ LABELS DATA
 
 """
 
+white_mask_amsterdam_imgs = parser.get_all_images_np_twod(white_mask_amsterdam)
+
 labels_utrecht_imgs = parser.get_all_images_np_twod(labels_utrecht)
 labels_singapore_imgs = parser.get_all_images_np_twod(labels_singapore)
 labels_amsterdam_imgs = parser.get_all_images_np_twod(labels_amsterdam)

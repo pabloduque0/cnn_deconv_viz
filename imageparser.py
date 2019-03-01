@@ -8,6 +8,7 @@ import subprocess
 from scipy.stats import norm
 from constants import *
 import matplotlib.pyplot as plt
+import SimpleITK
 
 class ImageParser():
 
@@ -143,8 +144,8 @@ class ImageParser():
 
         slices_list = []
         for path in paths_list:
-            image = itk.imread(path)
-            np_image = itk.GetArrayFromImage(image)
+            image = SimpleITK.ReadImage(path)
+            np_image = SimpleITK.GetArrayFromImage(image)
             if np_image.shape[1:] == (232, 256):
                 np_image = np.swapaxes(np_image, 1, 2)
                 print('Corrected axises')
