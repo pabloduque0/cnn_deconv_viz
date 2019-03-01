@@ -54,13 +54,13 @@ class ImageParser():
             for file in files:
                 filepath = root + '/' + file
                 key = self.get_key(file)
-                if file == 'wmh.nii':
+                if file == 'wmh.nii.gz':
                     data_and_labels[key] = filepath
 
                 length = len(data_and_labels)
-                if '/pre/' in filepath and self.is_file_desired(file) and length < 8 and length > 0:
+                if '/pre/' in filepath and self.is_file_desired(file) and length < 10 and length > 0:
                     data_and_labels[key] = filepath
-                    if len(data_and_labels) == 8:
+                    if len(data_and_labels) == 10:
                         full_dataset.append(data_and_labels.copy())
                         print(data_and_labels)
                         data_and_labels.clear()
@@ -85,14 +85,12 @@ class ImageParser():
 
         possibilities = {"FLAIR_masked.nii.gz": "flair_masked",
                          "FLAIR.nii.gz": "flair",
-                         "FLAIR.nii": "flair",
                          "T1_masked.nii.gz": "t1_masked",
                          "T1.nii.gz": "t1",
-                         "T1.nii": "t1",
                          "distWMborder_Danielsson.nii.gz": "danielsson_dist",
                          "distWMborder_Maurer.nii.gz": "maurer_dist",
                          "WMmask.nii.gz": "mask",
-                         "wmh.nii": "label",
+                         "wmh.nii.gz": "label",
                          "FLAIR_enhanced_lb_masked.nii.gz": "enhanced_masked",
                          "FLAIR_enhanced_lb.nii.gz": "enhanced"}
 
@@ -244,35 +242,36 @@ class ImageParser():
             this_section = np_list[image_idx*slice_number:(image_idx+1)*slice_number, :, :]
             flattened = np.ravel(this_section)
             non_black = flattened[flattened > 0]
-
-            lower_threshold = np.min(non_black)
             upper_threshold = np.max(non_black)
-            for slice in this_section:
-                normalized = (slice - lower_threshold) / (upper_threshold - lower_threshold)
-                normalized_list.append(normalized)
+            normalized = (this_section) / (upper_threshold)
+            normalized_list.append(normalized)
 
+        normalized_list = np.concatenate(normalized_list)
         return normalized_list
 
-    def normalize_quantile(self, flair_list, labels_list, slice_number):
+    def normalize_quantile(self, flair_list, slice_number):
 
         normalized_images = []
         flair_list = np.asanyarray(flair_list)
-        labels_list = np.asanyarray(labels_list)
 
         for image_idx in range(flair_list.shape[0] // slice_number):
             this_flair = flair_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
-            this_labels = labels_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
-            flair_labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
 
             flair_non_black = this_flair[this_flair > 0]
-            flair_normalized = self.find_best_quantile_normalization(this_flair, flair_non_black, flair_labels_idx)
-            normalized_images.append(flair_normalized)
+            lower_threshold, upper_threshold, upper_indexes, lower_indexes = self.get_thresholds_and_indexes(flair_non_black,
+                                                                                                             99.7,
+                                                                                                             this_flair)
+            final_normalized = (this_flair - lower_threshold) / (upper_threshold - lower_threshold)
+            final_normalized[upper_indexes] = 1.0
+            final_normalized[lower_indexes] = 0.0
+            print(np.max(final_normalized), np.min(final_normalized), np.mean(final_normalized))
+            normalized_images.append(final_normalized)
 
         normalized_images = np.concatenate(normalized_images, axis=0)
         return normalized_images
 
 
-
+    """
     def find_best_quantile_normalization(self, image, non_black, labels_idx):
 
         flair_not_labels_idx = np.where(np.delete(non_black, labels_idx) != None)
@@ -304,16 +303,11 @@ class ImageParser():
 
             upper_base += .1
 
-        lower_threshold, upper_threshold, upper_indexes, lower_indexes = self.get_thresholds_and_indexes(non_black,
-                                                                                                         best_upper_base,
-                                                                                                         image)
-        final_normalized = (image - lower_threshold) / (upper_threshold - lower_threshold)
-        final_normalized[upper_indexes] = 1.0
-        final_normalized[lower_indexes] = 0.0
+
         print("best_upper_base: ", best_upper_base)
 
         return final_normalized
-
+    """
 
     def get_thresholds_and_indexes(self, non_black, upper_perc, full_image=None, lower_perc=0.5):
 
