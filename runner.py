@@ -138,7 +138,6 @@ del labels_utrecht_resized, labels_singapore_resized, labels_amsterdam_resized
 DATA CONCAT
 
 '''
-print(utrecht_normalized_t1.shape, singapore_normalized_t1.shape, amsterdam_normalized_t1.shape)
 normalized_t1 = np.concatenate([utrecht_normalized_t1,
                                 singapore_normalized_t1,
                                 amsterdam_normalized_t1], axis=0)
