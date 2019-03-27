@@ -45,6 +45,8 @@ class UnetDeconv(BaseNetwork):
 
         inputs = layers.Input(shape=img_shape)
 
+        deconv_inputs = layers.Input(shape=img_shape)
+
         conv1_layer = layers.Conv2D(64, kernel_size=5, padding='same',
                               kernel_initializer='he_normal', activation='relu')
         conv1 = conv1_layer(inputs)
@@ -143,45 +145,52 @@ class UnetDeconv(BaseNetwork):
                                kernel_initializer='he_normal', activation='relu')
         conv22 = conv22_layer(conv21)
 
-        conv23 = layers.Conv2D(1, kernel_size=1, padding='same',
-                               kernel_initializer='he_normal', activation='sigmoid')(conv22)
+        conv23_layer = layers.Conv2D(1, kernel_size=1, padding='same',
+                               kernel_initializer='he_normal', activation='sigmoid')
+        conv23 = conv23_layer(conv22)
 
-        layers_toreverse = [conv22, conv19, conv16, conv13, conv10, conv8, conv6, conv4, conv2]
+        layers_toreverse = [conv22, conv19, conv16, conv13, conv9, conv7, conv5, conv3, conv1]
         all_switches = [switches_mask4, switches_mask3, switches_mask2, switches_mask1]
-        conv_layers_down = [conv22_layer, conv21_layer, conv20_layer, conv19_layer, conv18_layer, conv17_layer, conv16_layer,
-                       conv15_layer, conv14_layer, conv13_layer, conv12_layer, conv11_layer]
-        conv_layers_up = [conv10_layer, conv9_layer, conv8_layer, conv7_layer, conv6_layer, conv5_layer,
-                          conv4_layer, conv3_layer, conv2_layer, conv1_layer]
+        conv_layers_down = [(conv23_layer, conv23), (conv22_layer, conv22), (conv21_layer, conv21), (conv20_layer, conv20),
+                            (conv19_layer, conv19), (conv18_layer, conv18), (conv17_layer, conv17), (conv16_layer, conv16),
+                            (conv15_layer, conv15), (conv14_layer, conv14), (conv13_layer, conv13), (conv12_layer, conv12),
+                            (conv11_layer, conv11)]
+        conv_layers_up = [(conv10_layer,conv10), (conv9_layer, conv9), (conv8_layer, conv8), (conv7_layer, conv7),
+                          (conv6_layer, conv6), (conv5_layer, conv5), (conv4_layer, conv4), (conv3_layer, conv3),
+                          (conv2_layer, conv2), (conv1_layer, conv1)]
         upsamp_layers = [up_samp4_layer, up_samp3_layer, up_samp2_layer, up_samp1_layer]
 
-        reversed_layers = self.reverse_all_layers(layers_toreverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers)
+        reversed_layers = self.reverse_all_layers(deconv_inputs, layers_toreverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers)
 
         model = models.Model(inputs=inputs, outputs=conv23)
 
-        deconv_models = self.generate_deconv_models(inputs, reversed_layers)
+        deconv_models = self.generate_deconv_models(deconv_inputs, reversed_layers)
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
-                                                                                 ground_truth_sum, recall, custom_dice_coef, custom_dice_loss])
+                                                                                 ground_truth_sum, recall])
         model.summary()
 
         return model, deconv_models
 
-    def generate_deconv_models(self, inputs, reversed_layers):
-        deconv_models = [models.Model(inputs=inputs, outputs=rev_lay) for rev_lay in reversed_layers]
+    def generate_deconv_models(self, deconv_inputs, reversed_layers):
+        deconv_models = [models.Model(inputs=deconv_inputs, outputs=rev_lay) for rev_lay in reversed_layers]
+        deconv_models[0].summary()
         return deconv_models
 
 
-    def reverse_all_layers(self, layers_to_reverse, all_switches, conv_layers_down, conv_layers_up, upsamp_layers):
+
+    def reverse_all_layers(self, deconv_input,layers_to_reverse, all_switches,
+                            conv_layers_down, conv_layers_up, upsamp_layers):
 
         reversed_layers = []
         for index, layer_tr in enumerate(layers_to_reverse):
-            switches_list = all_switches[max(index - 4, 0):]
-            filters_up = [conv_layer.filters for conv_layer in conv_layers_up[max((index * 2) - 12, 0):]]
-            filters_down = [conv_layer.filters for conv_layer in conv_layers_down[index * 3:12]]
-            kernel_sizes = [conv_layer.kernel_size for conv_layer in conv_layers_down[index*3:] + conv_layers_up[max((index - 4) * 2, 0):]]
-            upsamp_size = [layer.size for layer in upsamp_layers[max(index - 4, 0):]]
-            reversed_layer = self.reverse_layer_path(layer_tr, switches_list, filters_up,
+            switches_list = all_switches[0: max(index - 4, 0)]
+            filters_up = [K.int_shape(conv_layer[1])[-1] for conv_layer in conv_layers_up[0: max((index*2) - (4*2), 0)]]
+            filters_down = [K.int_shape(conv_layer[1])[-1] for conv_layer in conv_layers_down[0:(index+1)*3]]
+            kernel_sizes = [conv_layer[0].kernel_size for conv_layer in conv_layers_down[0:(index+1)*3] + conv_layers_up[0: max((index*2) - (4*2), 0)]]
+            upsamp_size = [layer.size for layer in upsamp_layers[0:index+1]]
+            reversed_layer = self.reverse_layer_path(deconv_input, layer_tr, switches_list, filters_up,
                                                      filters_down, kernel_sizes,
                                                      upsamp_size)
             reversed_layers.append(reversed_layer)
@@ -189,6 +198,75 @@ class UnetDeconv(BaseNetwork):
         return reversed_layers
 
 
+    def reverse_layer_path(self, deconv_input, input_layer, switches_list, filters_up,
+                           filters_down, kernel_sizes, upsamp_sizes):
+
+        k_size_counter = 0
+        input_layer = layers.Conv2DTranspose(filters_down[0],
+                                             kernel_size=kernel_sizes[k_size_counter][0],
+                                             padding='same', kernel_initializer='he_normal',
+                                             activation='relu', trainable=False)(deconv_input)
+        k_size_counter += 1
+
+        for index in range(1, len(filters_down)//3):
+
+            input_layer = layers.Conv2DTranspose(filters_down[index],
+                                                 kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu', trainable=False)(input_layer)
+
+            k_size_counter += 1
+            input_layer = layers.Conv2DTranspose(filters_down[index + 1],
+                                                 kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu', trainable=False)(input_layer)
+            k_size_counter += 1
+
+            input_layer = layers.Conv2DTranspose(filters_down[index + 2],
+                                                 kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu', trainable=False)(input_layer)
+            k_size_counter += 1
+
+            input_layer = layers.Lambda(custom_layers.reverse_upconcat,
+                                        arguments={
+                                                   "height_factor": upsamp_sizes[index][0]/upsamp_sizes[index][0]**2,
+                                                   "width_factor": upsamp_sizes[index][1]/upsamp_sizes[index][1]**2},
+                                        output_shape=custom_layers.reverse_upconcat_output_shape(
+                                            K.int_shape(input_layer),
+                                            upsamp_sizes[index][0] /
+                                            upsamp_sizes[index][0] ** 2,
+                                            upsamp_sizes[index][1] /
+                                            upsamp_sizes[index][1] ** 2)
+                                        )(input_layer)
+
+        for index, switches in enumerate(switches_list):
+
+            input_layer = layers.Conv2DTranspose(filters_up[index], kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu', trainable=False)(input_layer)
+            k_size_counter += 1
+            input_layer = layers.Conv2DTranspose(filters_up[index + 1], kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu', trainable=False)(input_layer)
+            k_size_counter += 1
+            input_layer = layers.Lambda(custom_layers.unpooling_with_argmax2D,
+                                      arguments={"poolsize": (2, 2), "argmax": switches},
+                                      output_shape=K.int_shape(switches)[1:])(input_layer)
+
+
+        if len(switches_list) == 4:
+            input_layer = layers.Conv2DTranspose(filters_up[-2], kernel_size=kernel_sizes[k_size_counter],
+                                                        padding='same', kernel_initializer='he_normal',
+                                                        activation='relu', trainable=False)(input_layer)
+            input_layer = layers.Conv2DTranspose(filters_up[-1], kernel_size=kernel_sizes[k_size_counter],
+                                                 padding='same', kernel_initializer='he_normal',
+                                                 activation='relu', trainable=False)(input_layer)
+
+
+        return input_layer
+
+    """
     def reverse_layer_path(self, input_layer, switches_list, filters_up,
                            filters_down, kernel_sizes, upsamp_sizes):
 
@@ -250,8 +328,7 @@ class UnetDeconv(BaseNetwork):
 
         return last_deconv
 
-
-
+    """
 
     def train(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
 
