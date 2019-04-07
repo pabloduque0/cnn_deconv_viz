@@ -22,12 +22,12 @@ from basenetwork import BaseNetwork
 
 class UnetDeconv(BaseNetwork):
 
-    def __init__(self, model_paths=None, img_shape=None):
+    def __init__(self, model_paths=None, img_shape=None, deconv_shape=None):
 
         if model_paths is None:
-            if img_shape is None:
+            if img_shape is None or deconv_shape is None:
                 raise ValueError('If no model path is provided img shape is a mandatory argument.')
-            model, deconv_model = self.create_model(img_shape)
+            model, deconv_model = self.create_model(img_shape, deconv_shape)
         elif (isinstance(model_paths, tuple) or isinstance(model_paths, list)) and len(model_paths) == 2:
             model = load_model(model_paths[0])
             deconv_model = load_model(model_paths[1])
@@ -39,14 +39,14 @@ class UnetDeconv(BaseNetwork):
         self.deconv_models = deconv_model
 
 
-    def create_model(self, img_shape):
+    def create_model(self, img_shape, deconv_shape):
 
         concat_axis = 3
 
         inputs = layers.Input(shape=img_shape)
 
-        deconv_inputs = layers.Input(shape=img_shape)
-
+        deconv_inputs = layers.Input(shape=deconv_shape)
+        print("INSIDE", deconv_inputs)
         conv1_layer = layers.Conv2D(64, kernel_size=5, padding='same',
                               kernel_initializer='he_normal', activation='relu')
         conv1 = conv1_layer(inputs)
@@ -174,8 +174,10 @@ class UnetDeconv(BaseNetwork):
         return model, deconv_models
 
     def generate_deconv_models(self, deconv_inputs, reversed_layers):
-        deconv_models = [models.Model(inputs=deconv_inputs, outputs=rev_lay) for rev_lay in reversed_layers]
-        deconv_models[0].summary()
+        deconv_models = []
+        for index, rev_layer in enumerate(reversed_layers):
+            deconv_models.append(models.Model(inputs=deconv_inputs, outputs=rev_layer))
+            deconv_models[index].summary()
         return deconv_models
 
 
@@ -190,7 +192,7 @@ class UnetDeconv(BaseNetwork):
             filters_down = [K.int_shape(conv_layer[1])[-1] for conv_layer in conv_layers_down[0:(index+1)*3]]
             kernel_sizes = [conv_layer[0].kernel_size for conv_layer in conv_layers_down[0:(index+1)*3] + conv_layers_up[0: max((index*2) - (4*2), 0)]]
             upsamp_size = [layer.size for layer in upsamp_layers[0:index+1]]
-            reversed_layer = self.reverse_layer_path(deconv_input, layer_tr, switches_list, filters_up,
+            reversed_layer = self.reverse_layer_path(deconv_input, switches_list, filters_up,
                                                      filters_down, kernel_sizes,
                                                      upsamp_size)
             reversed_layers.append(reversed_layer)
@@ -198,11 +200,11 @@ class UnetDeconv(BaseNetwork):
         return reversed_layers
 
 
-    def reverse_layer_path(self, deconv_input, input_layer, switches_list, filters_up,
+    def reverse_layer_path(self, deconv_input, switches_list, filters_up,
                            filters_down, kernel_sizes, upsamp_sizes):
 
         k_size_counter = 0
-        input_layer = layers.Conv2DTranspose(filters_down[0],
+        input_layer = layers.Conv2DTranspose(filters_down[0] + 1,
                                              kernel_size=kernel_sizes[k_size_counter][0],
                                              padding='same', kernel_initializer='he_normal',
                                              activation='relu', trainable=False)(deconv_input)
@@ -412,9 +414,11 @@ class UnetDeconv(BaseNetwork):
             flair_t1 = np.concatenate([original[..., 0], original[..., 1]], axis=1)
             cv2.imwrite(os.path.join(complete_path, str(index) + "_original_deconv" + ".png"), flair_t1 * 255)
             cv2.imwrite(os.path.join(complete_path, str(index) + "_label_deconv" + ".png"), label * 255)
-            original = np.expand_dims(original, 0)
+            label = np.expand_dims(label, 0)
             for layer_idx in range(len(self.deconv_models)):
-                layer_pred = self.deconv_models[layer_idx].predict(original, batch_size=batch_size, verbose=1)
+                print("label shape", label.shape)
+                self.deconv_models[layer_idx].summary()
+                layer_pred = self.deconv_models[layer_idx].predict(label, batch_size=batch_size, verbose=1)
                 layer_pred = np.squeeze(layer_pred, axis=0)
                 layer_path = self.create_viz_folders(complete_path, layer_idx, "_layer")
                 for channel in range(layer_pred.shape[-1]):
