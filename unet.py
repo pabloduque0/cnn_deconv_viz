@@ -39,19 +39,19 @@ class Unet(BaseNetwork):
 
         conv1 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(inputs)
         conv2 = layers.Conv2D(64, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv1)
-        maxpool1, switches_mask1 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv2)
+        maxpool1 = layers.MaxPool2D(pool_size=(2, 2))(conv2)
 
         conv3 = layers.Conv2D(96, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool1)
         conv4 = layers.Conv2D(96, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv3)
-        maxpool2, switches_mask2 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv4)
+        maxpool2 = layers.MaxPool2D(pool_size=(2, 2))(conv4)
 
         conv5 = layers.Conv2D(128, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool2)
         conv6 = layers.Conv2D(128, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv5)
-        maxpool3, switches_mask3 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv6)
+        maxpool3 = layers.MaxPool2D(pool_size=(2, 2))(conv6)
 
         conv7 = layers.Conv2D(256, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool3)
         conv8 = layers.Conv2D(256, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(conv7)
-        maxpool4, switches_mask4 = custom_layers.MaxPoolingWithArgmax2D(pool_size=(2, 2))(conv8)
+        maxpool4 = layers.MaxPool2D(pool_size=(2, 2))(conv8)
 
         conv9 = layers.Conv2D(512, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(maxpool4)
         conv10 = layers.Conv2D(512, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(conv9)
