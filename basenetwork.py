@@ -13,6 +13,7 @@ class BaseNetwork():
     def __init__(self, model):
         self.model = model
         self.full_paths_dict = None
+        self.training_name = None
 
     def get_crop_shape(self, target, refer):
         # width, the 3rd dimension
@@ -89,6 +90,7 @@ class BaseNetwork():
     def train(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
 
         self.create_folders(training_name, base_path)
+        self.training_name = training_name
 
         checkpointer = ModelCheckpoint(filepath=self.full_paths_dict["weights_path"],
                                        save_best_only=True,
