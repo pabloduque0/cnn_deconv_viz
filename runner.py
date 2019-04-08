@@ -2,6 +2,7 @@ import numpy as np
 from unetdeconv import UnetDeconv
 from unet import Unet
 from oldunet import OldUnet
+from ustepnet import UStepNet
 from imageparser import ImageParser
 from imageaugmentator import ImageAugmentator
 from sklearn.model_selection import train_test_split
@@ -205,4 +206,4 @@ VISUALIZING
 """
 del data_train, labels_train, training_name
 gc.collect()
-unet.save_visualize_activations(validation_data, validation_labels, batch_size=30)
+#unet.save_visualize_activations(validation_data, validation_labels, batch_size=30)
