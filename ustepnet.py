@@ -6,7 +6,9 @@ from keras.losses import binary_crossentropy
 from keras import models
 from keras import layers
 from basenetwork import BaseNetwork
-
+import numpy as np
+import cv2
+import os
 
 class UStepNet(BaseNetwork):
 
@@ -92,10 +94,61 @@ class UStepNet(BaseNetwork):
         model = models.Model(inputs=inputs,
                              outputs=conv23)
 
-        model_outputs = model.Model(inputs=inputs,
+        model_outputs = models.Model(inputs=inputs,
                                     outputs=[conv2, conv4, conv6, conv8, conv10, conv12, conv14, conv16, conv22])
         model.compile(optimizer=Adam(lr=2e-5), loss=dice_coef_loss
                       , metrics=[dice_coef, recall])
         model.summary()
 
         return model, model_outputs
+
+
+    def save_steps_output(self, data, labels, batch_size=1):
+
+        steps_path = os.path.join(os.getcwd(), "steps_output/")
+
+        if not os.path.isdir(steps_path):
+            os.mkdir(steps_path)
+
+        train_path = os.path.join(steps_path, self.training_name)
+        if not os.path.isdir(train_path):
+            os.mkdir(train_path)
+
+        selected_data, selected_labels = zip(*[[x, y] for x, y in sorted(zip(data, labels),
+                                                                         key=lambda pair: len(np.nonzero(np.ravel(pair[1]))[0]),
+                                                                         reverse=True)])
+        selected_data, selected_labels = selected_data[:10], selected_labels[:10]
+
+        for img_index, img in enumerate(selected_data):
+            img_ready = np.expand_dims(img, 0)
+            predictions = self.models_outputs.predict(img_ready, batch_size=batch_size)
+            img_folder = os.path.join(train_path, "img_" + str(img_index))
+            if not os.path.isdir(img_folder):
+                os.mkdir(img_folder)
+            for pred_index, pred in enumerate(predictions):
+                step_folder = os.path.join(img_folder, "step_" + str(pred_index))
+                if not os.path.isdir(step_folder):
+                    os.mkdir(step_folder)
+                for chan_index in range(pred.shape[-1]):
+                    final_img = np.squeeze(pred[..., chan_index], 0)
+                    final_img = (final_img - np.min(final_img)) * 255 / (np.max(final_img) - np.min(final_img))
+                    filename = str(chan_index) + ".png"
+                    full_path = os.path.join(step_folder, filename)
+                    cv2.imwrite(full_path, final_img)
+
+
+    def predict_and_save(self, data, labels, batch_size=1):
+
+        output_path = self.full_paths_dict['output_path']
+        predictions = self.model.predict(data, batch_size=batch_size, verbose=1)
+
+        print("Saving output image from validation...")
+        for index, (pred, original, label) in enumerate(zip(predictions, data, labels)):
+            original = (original - np.min(original)) * 255 / (np.max(original) - np.min(original))
+
+            cv2.imwrite(output_path + 'original_' + str(index) + '.png',
+                        np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1))
+            cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
+            cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
+
+        self.save_steps_output(data, labels, batch_size)
