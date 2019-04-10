@@ -23,7 +23,7 @@ class ImageAugmentator():
         self.zy_range = zy_range
         self.shear_range = shear_range
 
-    def perform_all_augmentations(self, dataset_x, dataset_y, visualize=False):
+    def perform_all_augmentations(self, dataset_x, dataset_y, mix_up=False, visualize=False):
 
         if len(dataset_x) != len(dataset_y):
             raise ValueError("Wrong input. Image lists must be have the same length.")
@@ -74,6 +74,11 @@ class ImageAugmentator():
         del mult_xs, mult_ys
         del idx_group1, idx_group2, idx_group3, idx_group4, idx_group5
         gc.collect()
+
+        if mix_up:
+            mixed_x, mixed_y = self.apply_mixup(non_black_indices, dataset_x, dataset_y)
+            aug_dataset_x = np.concatenate([aug_dataset_x, mixed_x], axis=0)
+            aug_dataset_y = np.concatenate([aug_dataset_y, mixed_y], axis=0)
 
         if visualize:
             self.visualize_data_augmentation(dataset_x[non_black_indices],
