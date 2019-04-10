@@ -14,6 +14,13 @@ def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
     return regular_dice + ((1 - conn_comp_ratio) * regular_dice * conn_comp_weight)
 
 
+def thresholded_dice(y_true, y_pred):
+    y_true = tf.math.floor(y_true + 0.6)
+    return dice_coefficient(y_true, y_pred)
+
+def thresholded_dice_loss(y_true, y_pred):
+    return -thresholded_dice(y_true, y_pred)
+
 def custom_dice_coefficient_loss(y_true, y_pred):
     return -custom_dice_coefficient(y_true, y_pred)
 
