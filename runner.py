@@ -187,7 +187,7 @@ training_name = 'test_new_deconv'
 base_path = os.getcwd()
 
 print(data_train.shape, labels_train.shape, test_data.shape, test_labels.shape)
-unet = UnetDeconv(img_shape=data_train.shape[1:])
+unet = UStepNet(img_shape=data_train.shape[1:])
 unet.train(data_train, labels_train, (test_data, test_labels), training_name, base_path, epochs=35, batch_size=30)
 
 '''
