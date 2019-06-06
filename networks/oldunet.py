@@ -1,17 +1,9 @@
 from keras import models
 from keras import layers
-from contextlib import redirect_stdout
-import os
-from keras.callbacks import ModelCheckpoint, TensorBoard
-from sklearn.model_selection import train_test_split
 from keras.models import load_model
-from keras.optimizers import Adam, SGD
-from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, ground_truth_count, \
-    ground_truth_sum, predicted_sum, recall, custom_dice_coef, custom_dice_loss
-from keras.losses import binary_crossentropy
-import cv2
-import numpy as np
-from basenetwork import BaseNetwork
+from keras.optimizers import Adam
+from metrics import dice_coef, dice_coef_loss, recall
+from models.basenetwork import BaseNetwork
 
 class OldUnet(BaseNetwork):
 

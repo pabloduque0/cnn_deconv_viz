@@ -1,24 +1,17 @@
 from keras import models
 from keras import layers
-from contextlib import redirect_stdout
 import os
 from keras.callbacks import ModelCheckpoint, TensorBoard
-from sklearn.model_selection import train_test_split
 from keras.models import load_model
-from keras.optimizers import Adam, SGD
+from keras.optimizers import Adam
 from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
-    ground_truth_count, ground_truth_sum, predicted_sum, recall, custom_dice_coef, custom_dice_loss
+    ground_truth_count, ground_truth_sum, predicted_sum, recall
 from keras.losses import binary_crossentropy
 import cv2
 import numpy as np
-import custom_layers
+from models import custom_layers
 import keras.backend as K
-import math
-import pickle
-import gc
-import psutil
-import tensorflow as tf
-from basenetwork import BaseNetwork
+from models.basenetwork import BaseNetwork
 
 class UnetDeconv(BaseNetwork):
 
@@ -253,8 +246,8 @@ class UnetDeconv(BaseNetwork):
                                                  activation='relu', trainable=False)(input_layer)
             k_size_counter += 1
             input_layer = layers.Lambda(custom_layers.unpooling_with_argmax2D,
-                                      arguments={"poolsize": (2, 2), "argmax": switches},
-                                      output_shape=K.int_shape(switches)[1:])(input_layer)
+                                        arguments={"poolsize": (2, 2), "argmax": switches},
+                                        output_shape=K.int_shape(switches)[1:])(input_layer)
 
 
         if len(switches_list) == 4:
