@@ -4,14 +4,14 @@ import os
 from keras.callbacks import ModelCheckpoint, TensorBoard
 from keras.models import load_model
 from keras.optimizers import Adam
-from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
+from networks.metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
     ground_truth_count, ground_truth_sum, predicted_sum, recall
 from keras.losses import binary_crossentropy
 import cv2
 import numpy as np
-from models import custom_layers
+from networks import custom_layers
 import keras.backend as K
-from models.basenetwork import BaseNetwork
+from networks.basenetwork import BaseNetwork
 
 class UnetDeconv(BaseNetwork):
 

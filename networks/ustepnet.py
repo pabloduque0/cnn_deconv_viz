@@ -1,9 +1,9 @@
 from keras.models import load_model
 from keras.optimizers import Adam
-from metrics import dice_coef, dice_coef_loss, recall
+from networks.metrics import dice_coef, dice_coef_loss, recall
 from keras import models
 from keras import layers
-from models.basenetwork import BaseNetwork
+from networks.basenetwork import BaseNetwork
 import numpy as np
 import cv2
 import os

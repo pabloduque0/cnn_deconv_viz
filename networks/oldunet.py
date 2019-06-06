@@ -2,8 +2,8 @@ from keras import models
 from keras import layers
 from keras.models import load_model
 from keras.optimizers import Adam
-from metrics import dice_coef, dice_coef_loss, recall
-from models.basenetwork import BaseNetwork
+from networks.metrics import dice_coef, dice_coef_loss, recall
+from networks.basenetwork import BaseNetwork
 
 class OldUnet(BaseNetwork):
 

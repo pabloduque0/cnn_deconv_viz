@@ -2,10 +2,10 @@ from keras import models
 from keras import layers
 from keras.models import load_model
 from keras.optimizers import Adam
-from metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
+from networks.metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
     ground_truth_count, ground_truth_sum, predicted_sum, recall, custom_dice_coef, custom_dice_loss
 from keras.losses import binary_crossentropy
-from models.basenetwork import BaseNetwork
+from networks.basenetwork import BaseNetwork
 
 class Unet(BaseNetwork):
 
