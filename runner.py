@@ -1,12 +1,10 @@
 import numpy as np
-from unetdeconv import UnetDeconv
-from unet import Unet
-from oldunet import OldUnet
-from ustepnet import UStepNet
-from imageparser import ImageParser
-from imageaugmentator import ImageAugmentator
+from networks.ustepnet import UStepNet
+from networks.unet import Unet
+from networks.stacknet import StackNet
+from preprocessing.imageparser import ImageParser
+from augmentation.imageaugmentator import ImageAugmentator
 from sklearn.model_selection import train_test_split
-import cv2
 from constants import *
 import gc
 import os
