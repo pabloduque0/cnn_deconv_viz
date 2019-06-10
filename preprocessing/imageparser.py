@@ -1,7 +1,6 @@
 import os
 import gzip
 import shutil
-import itk
 import cv2
 import numpy as np
 import subprocess
@@ -102,7 +101,7 @@ class ImageParser():
     def get_all_images_itk(self, paths_list):
         images = []
         for path in paths_list:
-            image = itk.imread(path)
+            image = SimpleITK.imread(path)
             images.append(image)
 
         return images
@@ -128,8 +127,8 @@ class ImageParser():
     def process_all_images_np(self, paths_list, slice_shape, normalization=True):
         images = []
         for path in paths_list:
-            image = itk.imread(path)
-            np_image = itk.GetArrayFromImage(image)
+            image = SimpleITK.imread(path)
+            np_image = SimpleITK.GetArrayFromImage(image)
             np_image = np.swapaxes(np_image, 0, 2)
             resized = self.threed_resize(np_image, slice_shape)
             np_image = np.swapaxes(resized, 0, 2)
