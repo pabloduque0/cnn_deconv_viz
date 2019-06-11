@@ -9,7 +9,7 @@ def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
 
     n_conn_comp_true, _ = tf.unique(K.flatten(conn_comp_true))
     n_conn_comp_pred, _ = tf.unique(K.flatten(conn_comp_pred))
-    conn_comp_ratio = tf.math.abs(tf.size(n_conn_comp_pred) - tf.size(n_conn_comp_true)) / tf.size(n_conn_comp_true)
+    conn_comp_ratio = tf.size(n_conn_comp_pred) / tf.size(n_conn_comp_true)
     conn_comp_ratio = tf.cast(conn_comp_ratio, tf.float32)
     return regular_dice + ((1 - conn_comp_ratio) * regular_dice * conn_comp_weight)
 
