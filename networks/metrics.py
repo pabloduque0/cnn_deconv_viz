@@ -6,9 +6,10 @@ def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
     regular_dice = dice_coefficient(y_true, y_pred)
     conn_comp_true = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_true, axis=[-1]), tf.bool))
     conn_comp_pred = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_pred, axis=[-1]), tf.bool))
-
     n_conn_comp_true, _ = tf.unique(K.flatten(conn_comp_true))
     n_conn_comp_pred, _ = tf.unique(K.flatten(conn_comp_pred))
+    tf.logging.info("true: ", n_conn_comp_true)
+    tf.logging.info("pred: ", n_conn_comp_pred)
     conn_comp_ratio = tf.size(n_conn_comp_pred) / tf.size(n_conn_comp_true)
     conn_comp_ratio = tf.cast(conn_comp_ratio, tf.float32)
     return regular_dice + ((1 - conn_comp_ratio) * regular_dice * conn_comp_weight)

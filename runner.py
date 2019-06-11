@@ -8,7 +8,9 @@ from sklearn.model_selection import train_test_split
 from constants import *
 import gc
 import os
+import tensorflow as tf
 
+tf.logging.set_verbosity(tf.logging.INFO)
 
 parser = ImageParser()
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
