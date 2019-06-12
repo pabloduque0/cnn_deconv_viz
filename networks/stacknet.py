@@ -24,7 +24,7 @@ class StackNet(BaseNetwork):
         else:
             model = load_model(model_path)
 
-        super().__init__(model)
+        super().__init__(model, img_shape)
 
 
     def create_model(self, img_shape):
