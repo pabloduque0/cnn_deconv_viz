@@ -43,7 +43,7 @@ class StackNet(BaseNetwork):
             stack3)
         conv2 = layers.Conv2D(40, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv1)
-        conv2 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv2)
+        #conv2 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv2)
 
         maxpool1 = layers.MaxPool2D(pool_size=(2, 2))(conv2)
 
@@ -51,28 +51,28 @@ class StackNet(BaseNetwork):
             maxpool1)
         conv4 = layers.Conv2D(80, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv3)
-        conv4 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv4)
+        #conv4 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv4)
         maxpool2 = layers.MaxPool2D(pool_size=(2, 2))(conv4)
 
         conv5 = layers.Conv2D(112, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             maxpool2)
         conv6 = layers.Conv2D(112, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv5)
-        conv6 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv6)
+        #conv6 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv6)
         maxpool3 = layers.MaxPool2D(pool_size=(2, 2))(conv6)
 
         conv7 = layers.Conv2D(224, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             maxpool3)
         conv8 = layers.Conv2D(224, kernel_size=3, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv7)
-        conv8 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv8)
+        #conv8 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv8)
         maxpool4 = layers.MaxPool2D(pool_size=(2, 2))(conv8)
 
         conv9 = layers.Conv2D(224, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             maxpool4)
         conv10 = layers.Conv2D(416, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv9)
-        conv10 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv10)
+        #conv10 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv10)
         up_conv10 = layers.UpSampling2D(size=(2, 2))(conv10)
         up_conv1 = layers.Conv2D(416, kernel_size=5, padding='same',
                                  kernel_initializer='he_normal', activation='relu')(up_conv10)
@@ -84,7 +84,7 @@ class StackNet(BaseNetwork):
             up_samp1)
         conv12 = layers.Conv2D(224, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv11)
-        conv12 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv12)
+        #conv12 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv12)
 
         up_conv12 = layers.UpSampling2D(size=(2, 2))(conv12)
         up_conv2 = layers.Conv2D(336, kernel_size=5, padding='same',
@@ -97,7 +97,7 @@ class StackNet(BaseNetwork):
             up_samp2)
         conv14 = layers.Conv2D(112, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv13)
-        conv14 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv14)
+        #conv14 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv14)
 
         up_conv14 = layers.UpSampling2D(size=(2, 2))(conv14)
         up_conv3 = layers.Conv2D(192, kernel_size=5, padding='same',
@@ -110,7 +110,7 @@ class StackNet(BaseNetwork):
             up_samp3)
         conv16 = layers.Conv2D(80, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv15)
-        conv16 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv16)
+        #conv16 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv16)
 
         up_conv16 = layers.UpSampling2D(size=(2, 2))(conv16)
         up_conv4 = layers.Conv2D(140, kernel_size=5, padding='same',
@@ -123,7 +123,7 @@ class StackNet(BaseNetwork):
             up_samp4)
         conv22 = layers.Conv2D(40, kernel_size=5, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv21)
-        conv22 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv22)
+        #conv22 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv22)
 
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='sigmoid')(
             conv22)
