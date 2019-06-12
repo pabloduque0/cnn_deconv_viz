@@ -10,10 +10,51 @@ import gc
 
 class BaseNetwork():
 
-    def __init__(self, model):
+    def __init__(self, model, img_shape):
+        self.img_shape = img_shape
         self.model = model
+        self.cascade_models = None
         self.full_paths_dict = None
         self.training_name = None
+
+
+    def cascade_train(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
+        self.train(X, y, validation_data, training_name, base_path, epochs=epochs, batch_size=batch_size)
+
+        predictions_train = self.model.predict(X, batch_size=batch_size, verbose=1)
+        new_y = y - predictions_train
+        new_y[new_y < 0] = 0
+
+        predictions_val = self.model.predict(validation_data[0], batch_size=batch_size, verbose=1)
+        new_val = validation_data[0] - predictions_val
+        new_val[new_val < 0] = 0
+
+        self.cascade_models = self.create_model(img_shape=self.img_shape)
+        cascade_name = training_name + "_cascade"
+        self.train(X, y, validation_data, cascade_name, base_path,
+                   epochs=epochs, batch_size=batch_size, model=self.cascade_models)
+
+
+    def create_model(self, img_shape):
+        raise NotImplementedError
+
+    def cascade_predict_and_save(self, data, labels, batch_size=1):
+
+        output_path = self.full_paths_dict['output_path']
+        predictions = self.model.predict(data, batch_size=batch_size, verbose=1)
+        cascade_preds = self.cascade_models.predict(data, batch_size=batch_size, verbose=1)
+
+        final_predictions = np.logical_or(predictions, cascade_preds)
+
+        print("Saving output image from validation...")
+        for index, (pred, original, label) in enumerate(zip(final_predictions, data, labels)):
+            original = (original - np.min(original)) * 255 / (np.max(original) - np.min(original))
+
+            cv2.imwrite(output_path + 'original_' + str(index) + '.png',
+                        np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1))
+            cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
+            cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
+
 
     def get_crop_shape(self, target, refer):
         # width, the 3rd dimension
@@ -87,7 +128,7 @@ class BaseNetwork():
         self.full_paths_dict = full_paths_dict
 
 
-    def train(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
+    def train(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32, model=None):
 
         self.create_folders(training_name, base_path)
         self.training_name = training_name
@@ -113,12 +154,21 @@ class BaseNetwork():
         self.save_specs(self.full_paths_dict['specs_path'], fit_specs)
 
 
-        self.model.fit(X, y,
-                       batch_size=batch_size,
-                       callbacks=[checkpointer, tensorboard_callback],
-                       epochs=epochs,
-                       validation_data=validation_data,
-                       verbose=1)
+        if model is None:
+            self.model.fit(X, y,
+                           batch_size=batch_size,
+                           callbacks=[checkpointer, tensorboard_callback],
+                           epochs=epochs,
+                           validation_data=validation_data,
+                           verbose=1)
+        else:
+            model.fit(X, y,
+                      batch_size=batch_size,
+                      callbacks=[checkpointer, tensorboard_callback],
+                      epochs=epochs,
+                      validation_data=validation_data,
+                      verbose=1)
+            return model
 
 
     def train_with_generator(self, X, y, validation_data, training_name, base_path, epochs=10, batch_size=32):
