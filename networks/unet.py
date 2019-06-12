@@ -3,7 +3,7 @@ from keras import layers
 from keras.models import load_model
 from keras.optimizers import Adam
 from networks.metrics import dice_coef, dice_coef_loss, weighted_crossentropy, predicted_count, \
-    ground_truth_count, ground_truth_sum, predicted_sum, recall, custom_dice_coef, custom_dice_loss
+    ground_truth_count, ground_truth_sum, predicted_sum, pixel_recall, custom_dice_coef, custom_dice_loss
 from keras.losses import binary_crossentropy
 from networks.basenetwork import BaseNetwork
 
@@ -90,7 +90,7 @@ class Unet(BaseNetwork):
 
         model.compile(optimizer=Adam(lr=2e-5), loss=dice_coef_loss, metrics=[dice_coef, binary_crossentropy, weighted_crossentropy,
                                                                                    predicted_count, predicted_sum, ground_truth_count,
-                                                                                 ground_truth_sum, recall, custom_dice_coef, custom_dice_loss])
+                                                                                 ground_truth_sum, pixel_recall, custom_dice_coef, custom_dice_loss])
         model.summary()
 
         return model

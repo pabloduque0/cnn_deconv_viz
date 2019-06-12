@@ -1,6 +1,6 @@
 from keras.models import load_model
 from keras.optimizers import Adam
-from networks.metrics import dice_coef, dice_coef_loss, recall
+from networks.metrics import dice_coef, dice_coef_loss, pixel_recall
 from keras import models
 from keras import layers
 from networks.basenetwork import BaseNetwork
@@ -95,7 +95,7 @@ class UStepNet(BaseNetwork):
         model_outputs = models.Model(inputs=inputs,
                                     outputs=[conv2, conv4, conv6, conv8, conv10, conv12, conv14, conv16, conv22])
         model.compile(optimizer=Adam(lr=2e-5), loss=dice_coef_loss
-                      , metrics=[dice_coef, recall])
+                      , metrics=[dice_coef, pixel_recall])
         model.summary()
 
         return model, model_outputs

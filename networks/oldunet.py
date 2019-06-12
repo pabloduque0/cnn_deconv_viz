@@ -2,7 +2,7 @@ from keras import models
 from keras import layers
 from keras.models import load_model
 from keras.optimizers import Adam
-from networks.metrics import dice_coef, dice_coef_loss, recall
+from networks.metrics import dice_coef, dice_coef_loss, pixel_recall
 from networks.basenetwork import BaseNetwork
 
 class OldUnet(BaseNetwork):
@@ -75,7 +75,7 @@ class OldUnet(BaseNetwork):
 
         model = models.Model(inputs=inputs, outputs=conv23)
 
-        model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, recall])
+        model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss, metrics=[dice_coef, pixel_recall])
 
         model.summary()
 
