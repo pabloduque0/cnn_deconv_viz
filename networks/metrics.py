@@ -6,9 +6,7 @@ def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
     regular_dice = dice_coefficient(y_true, y_pred)
     recall = lession_recall(y_true, y_pred)
 
-    if tf.greater(recall, tf.Variable(1.0)):
-        recall = -recall
-
+    recall = tf.cond(tf.greater(recall, tf.Variable(1.0)), lambda: -recall, lambda: recall)
     return regular_dice + (recall * regular_dice * conn_comp_weight)
 
 def lession_recall(y_true, y_pred):
