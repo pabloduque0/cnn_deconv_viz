@@ -29,13 +29,13 @@ class BaseNetwork():
         new_val = validation_data[1] - predictions_val
         new_val[new_val < 0] = 0
 
-        self.cascade_models = self.create_model(img_shape=self.img_shape)
+        self.cascade_models = self.create_model(img_shape=self.img_shape, kernel_size=3)
         cascade_name = training_name + "_cascade"
         self.train(X, new_y, (validation_data[0], new_val), cascade_name, base_path,
                    epochs=epochs, batch_size=batch_size, model=self.cascade_models)
 
 
-    def create_model(self, img_shape):
+    def create_model(self, img_shape, kernel_size=5):
         raise NotImplementedError
 
     def cascade_predict_and_save(self, data, labels, batch_size=1):
