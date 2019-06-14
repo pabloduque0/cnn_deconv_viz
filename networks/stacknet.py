@@ -125,8 +125,10 @@ class StackNet(BaseNetwork):
             conv21)
         #conv22 = layers.BatchNormalization(axis=concat_axis, momentum=0.99, epsilon=0.001, center=True, scale=True)(conv22)
 
+        padded = layers.ZeroPadding2D(img_shape[0] - K.int_shape(conv22)[1])(conv22)
+
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='sigmoid')(
-            conv22)
+            padded)
         model = models.Model(inputs=inputs, outputs=conv23)
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss,
