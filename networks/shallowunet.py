@@ -39,8 +39,13 @@ class ShallowUnet(BaseNetwork):
         stack3 = layers.Conv2D(40, kernel_size=kernel_size, padding='same', kernel_initializer='he_normal', activation='relu')(
             stack2)
 
+        stack4 = layers.Conv2D(40, kernel_size=kernel_size, padding='same', kernel_initializer='he_normal',
+                               activation='relu')(stack3)
+        stack5 = layers.Conv2D(40, kernel_size=kernel_size, padding='same', kernel_initializer='he_normal',
+                               activation='relu')(stack4)
+
         conv1 = layers.Conv2D(40, kernel_size=kernel_size, padding='same', kernel_initializer='he_normal', activation='relu')(
-            stack3)
+            stack5)
         conv2 = layers.Conv2D(40, kernel_size=kernel_size, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv1)
 
@@ -100,9 +105,8 @@ class ShallowUnet(BaseNetwork):
         conv22 = layers.Conv2D(40, kernel_size=kernel_size, padding='same', kernel_initializer='he_normal', activation='relu')(
             conv21)
 
-        padded = layers.ZeroPadding2D(img_shape[0] - K.int_shape(conv22)[1])(conv22)
         conv23 = layers.Conv2D(1, kernel_size=1, padding='same', kernel_initializer='he_normal', activation='sigmoid')(
-            padded)
+            conv22)
         model = models.Model(inputs=inputs, outputs=conv23)
 
         model.compile(optimizer=Adam(lr=0.000001), loss=dice_coef_loss,
