@@ -2,7 +2,7 @@ from keras import models
 from keras import layers
 import tensorflow as tf
 from keras.optimizers import Adam
-
+from augmentation import metrics
 
 def create_model(input_shape):
 
@@ -31,6 +31,8 @@ def create_model(input_shape):
     final_activation = layers.Activation('sigmoid')(dense)
 
     model = models.Model(inputs=input_layer, outputs=final_activation)
+
+    model.compile(Adam(lr=0.001, beta1=0, beta2=0.99), loss=metrics.wgan_loss)
     model.summary()
 
     return model
