@@ -66,6 +66,39 @@ class ImageParser():
 
         return full_dataset
 
+    def get_all_sets_paths(self, dataset_paths):
+
+        t1 = [row["t1_masked"] for row in dataset_paths]
+        flair = [row["enhanced_masked"] for row in dataset_paths]
+        labels = [row["label"] for row in dataset_paths]
+        white_mask = [row["mask"] for row in dataset_paths]
+        distance = [row["danielsson_dist"] for row in dataset_paths]
+
+        return t1, flair, labels, white_mask, distance
+
+
+    def preprocess_all_labels(self, labels_paths_list, slice_shape):
+
+        all_labels = []
+        for label_paths in labels_paths_list:
+            preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape)
+            all_labels.append(preprocessed_labels)
+
+        final_label_imgs = np.concatenate(all_labels, axis=0)
+        final_label_imgs = np.expand_dims(np.asanyarray(final_label_imgs), axis=3)
+
+        return final_label_imgs
+
+    def preprocess_dataset_labels(self, label_paths, slice_shape):
+
+        labels_imgs = self.get_all_images_np_twod(label_paths)
+        labels_resized = self.resize_slices(labels_imgs, slice_shape)
+        labels_resized = self.remove_third_label(labels_resized)
+        labels_resized = self.remove_top_bot_slices(labels_resized, UTRECH_N_SLICES)
+
+        return labels_resized
+
+
     def is_file_desired(self, file_name):
         possibilities = {"FLAIR_masked.nii.gz",
                             "FLAIR.nii.gz",
