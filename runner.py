@@ -16,23 +16,9 @@ tf.logging.set_verbosity(tf.logging.INFO)
 parser = ImageParser()
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
 
-t1_utrecht = [row["t1_masked"] for row in utrech_dataset]
-flair_utrecht = [row["enhanced_masked"] for row in utrech_dataset]
-labels_utrecht = [row["label"] for row in utrech_dataset]
-white_mask_utrecht = [row["mask"] for row in utrech_dataset]
-distance_utrecht = [row["danielsson_dist"] for row in utrech_dataset]
-
-t1_singapore = [row["t1_masked"] for row in singapore_dataset]
-flair_singapore = [row["enhanced_masked"] for row in singapore_dataset]
-labels_singapore = [row["label"] for row in singapore_dataset]
-white_mask_singapore = [row["mask"] for row in singapore_dataset]
-distance_singapore = [row["danielsson_dist"] for row in singapore_dataset]
-
-t1_amsterdam = [row["t1_masked"] for row in amsterdam_dataset]
-flair_amsterdam = [row["enhanced_masked"] for row in amsterdam_dataset]
-labels_amsterdam = [row["label"] for row in amsterdam_dataset]
-white_mask_amsterdam = [row["mask"] for row in amsterdam_dataset]
-distance_amsterdam = [row["danielsson_dist"] for row in amsterdam_dataset]
+t1_utrecht, flair_utrecht, labels_utrecht, white_mask_utrecht, distance_utrecht = parser.get_all_sets_paths(utrech_dataset)
+t1_singapore, flair_singapore, labels_singapore, white_mask_singapore, distance_singapore = parser.get_all_sets_paths(singapore_dataset)
+t1_amsterdam, flair_amsterdam, labels_amsterdam, white_mask_amsterdam, distance_amsterdam = parser.get_all_sets_paths(amsterdam_dataset)
 
 slice_shape = SLICE_SHAPE
 
@@ -47,31 +33,10 @@ LABELS DATA
 
 """
 
-white_mask_amsterdam_imgs = parser.get_all_images_np_twod(white_mask_amsterdam)
 
-labels_utrecht_imgs = parser.get_all_images_np_twod(labels_utrecht)
-labels_singapore_imgs = parser.get_all_images_np_twod(labels_singapore)
-labels_amsterdam_imgs = parser.get_all_images_np_twod(labels_amsterdam)
-
-labels_utrecht_resized = parser.resize_slices(labels_utrecht_imgs, slice_shape)
-labels_singapore_resized = parser.resize_slices(labels_singapore_imgs, slice_shape)
-labels_amsterdam_resized = parser.resize_slices(labels_amsterdam_imgs, slice_shape)
-
-labels_utrecht_resized = parser.remove_third_label(labels_utrecht_resized)
-labels_singapore_resized = parser.remove_third_label(labels_singapore_resized)
-labels_amsterdam_resized = parser.remove_third_label(labels_amsterdam_resized)
-
-del labels_utrecht_imgs, labels_singapore_imgs, labels_amsterdam_imgs
-
-labels_utrecht_resized = parser.remove_top_bot_slices(labels_utrecht_resized, UTRECH_N_SLICES)
-labels_singapore_resized = parser.remove_top_bot_slices(labels_singapore_resized, SINGAPORE_N_SLICES)
-labels_amsterdam_resized = parser.remove_top_bot_slices(labels_amsterdam_resized, AMSTERDAM_N_SLICES)
-
-final_label_imgs = np.concatenate([labels_utrecht_resized,
-                                   labels_singapore_resized,
-                                   labels_amsterdam_resized], axis=0)
-final_label_imgs = np.expand_dims(np.asanyarray(final_label_imgs), axis=3)
-
+final_label_imgs = parser.preprocess_all_labels([labels_utrecht,
+                                                 labels_singapore,
+                                                 labels_amsterdam], slice_shape)
 
 '''
 
@@ -133,7 +98,6 @@ amsterdam_normalized_flairs = parser.standarize(amsterdam_resized_flairs,
 
 
 del amsterdam_data_flair, amsterdam_resized_flairs, flair_amsterdam
-del labels_utrecht_resized, labels_singapore_resized, labels_amsterdam_resized
 
 
 '''
