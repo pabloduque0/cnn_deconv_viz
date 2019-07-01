@@ -23,10 +23,10 @@ def create_model(input_shape):
     block7_out = conv_up_block(block6_out, 32)
     block8_out = conv_up_block(block7_out, 16)
 
-    conv_last = layers.Conv2D(kernel_size=1, padding='same')(block8_out)
+    conv_last = layers.Conv2D(3, kernel_size=1, padding='same')(block8_out)
     model = models.Model(inputs=input_layer, outputs=conv_last)
 
-    model.compile(Adam(lr=0.001, beta1=0, beta2=0.99), loss=metrics.wgan_loss)
+    model.compile(Adam(lr=0.001, beta_1=0, beta_2=0.99), loss=metrics.wasserstein_loss)
     model.summary()
 
     return model
