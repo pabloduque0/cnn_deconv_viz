@@ -77,11 +77,11 @@ class ImageParser():
         return t1, flair, labels, white_mask, distance
 
 
-    def preprocess_all_labels(self, labels_paths_list, slice_shape):
+    def preprocess_all_labels(self, labels_paths_list, slice_shape, n_slices_all):
 
         all_labels = []
-        for label_paths in labels_paths_list:
-            preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape)
+        for label_paths, n_slices in zip(labels_paths_list, n_slices_all):
+            preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape, n_slices)
             all_labels.append(preprocessed_labels)
 
         final_label_imgs = np.concatenate(all_labels, axis=0)
@@ -89,12 +89,30 @@ class ImageParser():
 
         return final_label_imgs
 
-    def preprocess_dataset_labels(self, label_paths, slice_shape):
+
+    def preprocess_dataset_t1(self, data_t1, slice_shape, n_slices, remove_top, remove_bot):
+
+        data_t1 = self.get_all_images_np_twod(data_t1)
+        resized_t1 = self.resize_slices(data_t1, slice_shape)
+        resized_t1 = self.remove_top_bot_slices(resized_t1, n_slices)
+        normalized_t1 = self.standarize(resized_t1, n_slices - remove_top - remove_bot)
+
+        return normalized_t1
+
+    def preprocess_dataset_flair(self, data_flair, slice_shape, n_slices, remove_top, remove_bot):
+        data_flair = self.get_all_images_np_twod(data_flair)
+        resized_flairs = self.resize_slices(data_flair, slice_shape)
+        resized_flairs = self.remove_top_bot_slices(resized_flairs, n_slices)
+        stand_flairs = self.standarize(resized_flairs, n_slices - remove_top - remove_bot)
+
+        return stand_flairs
+
+    def preprocess_dataset_labels(self, label_paths, slice_shape, n_slices):
 
         labels_imgs = self.get_all_images_np_twod(label_paths)
         labels_resized = self.resize_slices(labels_imgs, slice_shape)
         labels_resized = self.remove_third_label(labels_resized)
-        labels_resized = self.remove_top_bot_slices(labels_resized, UTRECH_N_SLICES)
+        labels_resized = self.remove_top_bot_slices(labels_resized, n_slices)
 
         return labels_resized
 
