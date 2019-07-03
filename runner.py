@@ -32,41 +32,24 @@ print('Amsterdam: ', len(t1_amsterdam), len(flair_amsterdam), len(labels_amsterd
 LABELS DATA
 
 """
-
-
 final_label_imgs = parser.preprocess_all_labels([labels_utrecht,
                                                  labels_singapore,
-                                                 labels_amsterdam], slice_shape)
-
+                                                 labels_amsterdam], slice_shape, [UTRECH_N_SLICES,
+                                                                                  SINGAPORE_N_SLICES,
+                                                                                  AMSTERDAM_N_SLICES])
 '''
 
 T1 DATA
 
 '''
-utrecht_data_t1 = parser.get_all_images_np_twod(t1_utrecht)
-utrecht_resized_t1 = parser.resize_slices(utrecht_data_t1, slice_shape)
-utrecht_resized_t1 = parser.remove_top_bot_slices(utrecht_resized_t1, UTRECH_N_SLICES)
-utrecht_normalized_t1 = parser.standarize(utrecht_resized_t1,
-                                                UTRECH_N_SLICES - REMOVE_TOP - REMOVE_BOT)
+utrecht_normalized_t1 = parser.preprocess_dataset_t1(t1_utrecht, slice_shape, UTRECH_N_SLICES,
+                                                     REMOVE_TOP, REMOVE_BOT)
+singapore_normalized_t1 = parser.preprocess_dataset_t1(t1_singapore, slice_shape, SINGAPORE_N_SLICES,
+                                                       REMOVE_TOP, REMOVE_BOT)
+amsterdam_normalized_t1 = parser.preprocess_dataset_t1(t1_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
+                                                       REMOVE_TOP, REMOVE_BOT)
 
-del utrecht_data_t1, utrecht_resized_t1, t1_utrecht
-
-singapore_data_t1 = parser.get_all_images_np_twod(t1_singapore)
-singapore_resized_t1 = parser.resize_slices(singapore_data_t1, slice_shape)
-singapore_resized_t1 = parser.remove_top_bot_slices(singapore_resized_t1, SINGAPORE_N_SLICES)
-singapore_normalized_t1 = parser.standarize(singapore_resized_t1,
-                                                  SINGAPORE_N_SLICES - REMOVE_TOP - REMOVE_BOT)
-
-del singapore_data_t1, singapore_resized_t1, t1_singapore
-
-amsterdam_data_t1 = parser.get_all_images_np_twod(t1_amsterdam)
-amsterdam_resized_t1 = parser.resize_slices(amsterdam_data_t1, slice_shape)
-amsterdam_resized_t1 = parser.remove_top_bot_slices(amsterdam_resized_t1, AMSTERDAM_N_SLICES)
-amsterdam_normalized_t1 = parser.standarize(amsterdam_resized_t1,
-                                                  AMSTERDAM_N_SLICES - REMOVE_TOP - REMOVE_BOT)
-
-del amsterdam_data_t1, amsterdam_resized_t1, t1_amsterdam
-
+del t1_utrecht, t1_singapore, t1_amsterdam
 
 '''
 
@@ -74,30 +57,15 @@ FLAIR DATA
 
 '''
 
-utrecht_data_flair = parser.get_all_images_np_twod(flair_utrecht)
-utrecht_resized_flairs = parser.resize_slices(utrecht_data_flair, slice_shape)
-utrecht_resized_flairs = parser.remove_top_bot_slices(utrecht_resized_flairs, UTRECH_N_SLICES)
-utrecht_normalized_flairs = parser.standarize(utrecht_resized_flairs,
-                                                      UTRECH_N_SLICES - REMOVE_TOP - REMOVE_BOT)
 
-del utrecht_data_flair, utrecht_resized_flairs, flair_utrecht
+utrecht_stand_flairs = parser.preprocess_dataset_flair(flair_utrecht, slice_shape, UTRECH_N_SLICES,
+                                                       REMOVE_TOP, REMOVE_BOT)
+singapore_stand_flairs = parser.preprocess_dataset_flair(flair_singapore, slice_shape, SINGAPORE_N_SLICES,
+                                                       REMOVE_TOP, REMOVE_BOT)
+amsterdam_stand_flairs = parser.preprocess_dataset_flair(flair_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
+                                                       REMOVE_TOP, REMOVE_BOT)
 
-singapore_data_flair = parser.get_all_images_np_twod(flair_singapore)
-singapore_resized_flairs = parser.resize_slices(singapore_data_flair, slice_shape)
-singapore_resized_flairs = parser.remove_top_bot_slices(singapore_resized_flairs, SINGAPORE_N_SLICES)
-singapore_normalized_flairs = parser.standarize(singapore_resized_flairs,
-                                                        SINGAPORE_N_SLICES - REMOVE_TOP - REMOVE_BOT)
-
-del singapore_data_flair, singapore_resized_flairs, flair_singapore
-
-amsterdam_data_flair = parser.get_all_images_np_twod(flair_amsterdam)
-amsterdam_resized_flairs = parser.resize_slices(amsterdam_data_flair, slice_shape)
-amsterdam_resized_flairs = parser.remove_top_bot_slices(amsterdam_resized_flairs, AMSTERDAM_N_SLICES)
-amsterdam_normalized_flairs = parser.standarize(amsterdam_resized_flairs,
-                                                        AMSTERDAM_N_SLICES - REMOVE_TOP - REMOVE_BOT)
-
-
-del amsterdam_data_flair, amsterdam_resized_flairs, flair_amsterdam
+del flair_utrecht, flair_singapore, flair_amsterdam
 
 
 '''
@@ -108,19 +76,17 @@ DATA CONCAT
 normalized_t1 = np.concatenate([utrecht_normalized_t1,
                                 singapore_normalized_t1,
                                 amsterdam_normalized_t1], axis=0)
-normalized_flairs = np.concatenate([utrecht_normalized_flairs,
-                                    singapore_normalized_flairs,
-                                    amsterdam_normalized_flairs], axis=0)
+normalized_flairs = np.concatenate([utrecht_stand_flairs,
+                                    singapore_stand_flairs,
+                                    amsterdam_stand_flairs], axis=0)
 
 
 del utrecht_normalized_t1, singapore_normalized_t1, amsterdam_normalized_t1
-del utrecht_normalized_flairs, singapore_normalized_flairs, amsterdam_normalized_flairs
+del utrecht_stand_flairs, singapore_stand_flairs, amsterdam_stand_flairs
 
 data_t1 = np.expand_dims(np.asanyarray(normalized_t1), axis=3)
 data_flair = np.expand_dims(np.asanyarray(normalized_flairs), axis=3)
 all_data = np.concatenate([data_t1, data_flair], axis=3)
-
-
 
 del data_t1, data_flair
 
@@ -131,6 +97,7 @@ gc.collect()
 AUGMENTATION
 
 '''
+print(all_data.shape, final_label_imgs.shape)
 data_train, test_data, labels_train, test_labels = train_test_split(all_data, final_label_imgs,
                                                                     test_size=0.15, random_state=42)
 
