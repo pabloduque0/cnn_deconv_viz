@@ -16,9 +16,8 @@ def create_model(input_shape):
     block3_out = create_conv_block(block2_out, (128, 256))
     block4_out = create_conv_block(block3_out, (256, 512))
     block5_out = create_conv_block(block4_out, (512, 512))
-    block6_out = create_conv_block(block5_out, (512, 512))
 
-    normalized = layers.Lambda(lambda x: MiniBatchStddev(x))(block6_out)
+    normalized = layers.Lambda(lambda x: MiniBatchStddev(x))(block5_out)
     conv2 = layers.Conv2D(512, kernel_size=3, padding='same')(normalized)
     conv2 = layers.LeakyReLU(alpha=0.2)(conv2)
 
