@@ -44,11 +44,11 @@ T1 DATA
 
 '''
 utrecht_normalized_t1 = parser.preprocess_dataset_t1(t1_utrecht, slice_shape, UTRECH_N_SLICES,
-                                                     REMOVE_TOP, REMOVE_BOT)
+                                                     REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
 singapore_normalized_t1 = parser.preprocess_dataset_t1(t1_singapore, slice_shape, SINGAPORE_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT)
+                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
 amsterdam_normalized_t1 = parser.preprocess_dataset_t1(t1_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT)
+                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
 
 del t1_utrecht, t1_singapore, t1_amsterdam
 
@@ -60,11 +60,11 @@ FLAIR DATA
 
 
 utrecht_stand_flairs = parser.preprocess_dataset_flair(flair_utrecht, slice_shape, UTRECH_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT)
+                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
 singapore_stand_flairs = parser.preprocess_dataset_flair(flair_singapore, slice_shape, SINGAPORE_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT)
+                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
 amsterdam_stand_flairs = parser.preprocess_dataset_flair(flair_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT)
+                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
 
 del flair_utrecht, flair_singapore, flair_amsterdam
 
@@ -95,6 +95,6 @@ gc.collect()
 
 training_name = "gan_test1_v1"
 base_path = os.getcwd()
-GAN = gan.GenericGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1] + 1))
+GAN = gan.GenericGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]))
 GAN.train(all_data, final_label_imgs, base_path=base_path, training_name=training_name,
           epochs=10000, batch_size=32, save_interval=500)
