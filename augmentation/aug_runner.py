@@ -97,4 +97,4 @@ training_name = "gan_test1_v1"
 base_path = os.getcwd()
 GAN = gan.GenericGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]))
 GAN.train(all_data, final_label_imgs, base_path=base_path, training_name=training_name,
-          epochs=10000, batch_size=32, save_interval=500)
+          epochs=2000, batch_size=32, save_interval=100)
