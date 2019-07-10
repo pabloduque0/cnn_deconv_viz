@@ -18,6 +18,13 @@ def js_loss(logits_real, logits_fake, smooth_factor=0.9):
             logits=logits_fake, labels=tf.ones_like(logits_fake)))
     return d_loss, g_loss
 
+def generator_loss(y_true, y_pred):
+    # generator loss for fooling discriminator
+    g_loss = tf.math.reduce_mean(
+        tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=y_pred, labels=tf.ones_like(y_true)))
+    return g_loss
+
 
 def wasserstein_loss(y_true, y_pred):
     """Calculates the Wasserstein loss for a sample batch.
@@ -33,3 +40,4 @@ def wasserstein_loss(y_true, y_pred):
     Note that the nature of this loss means that it can be (and frequently will be)
     less than 0."""
     return K.mean(y_true * y_pred)
+
