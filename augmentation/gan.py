@@ -100,7 +100,7 @@ class GenericGAN:
         for i in range(n_imgs):
             img_name = "generated_img_%d_epoch_%d.png" % (i, epoch)
             cv2.imwrite(os.path.join(imgs_path, img_name),
-                        np.concatenate([gen_img[i, :, :, 0], gen_img[i, :, :, 1]], axis=1))
+                        np.concatenate([gen_img[i, :, :, 0], gen_img[i, :, :, 1]], axis=1)*255)
 
 
     def generate_folders(self, base_path, training_name):
