@@ -3,6 +3,8 @@ from keras import layers
 import tensorflow as tf
 from keras.optimizers import Adam
 from augmentation import metrics
+from keras import losses
+
 
 def create_model(input_shape):
 
@@ -26,10 +28,10 @@ def create_model(input_shape):
 
     flatten = layers.Flatten()(conv3)
     dense = layers.Dense(1)(flatten)
+    final_activation = layers.Activation("sigmoid")(dense)
 
-    model = models.Model(inputs=input_layer, outputs=dense)
+    model = models.Model(inputs=input_layer, outputs=final_activation)
 
-    model.compile(Adam(lr=0.001, beta_1=0., beta_2=0.99), loss=metrics.wasserstein_loss)
     model.summary()
 
     return model
