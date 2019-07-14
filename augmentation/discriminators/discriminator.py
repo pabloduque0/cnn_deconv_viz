@@ -49,7 +49,7 @@ def create_conv_block(input_layer, filters):
 
     return output_layer
 
-def MiniBatchStddev(x, group_size=4): #again position of channels matter!
+def MiniBatchStddev(x, group_size=5): #again position of channels matter!
     group_size = tf.minimum(group_size, tf.shape(x)[0])# Minibatch must be divisible by (or smaller than) group_size.
     s = x.shape                                             # [NCHW]  Input shape.
     y = tf.reshape(x, [group_size, -1, s[1], s[2], s[3]])   # [GMCHW] Split minibatch into M groups of size G.
