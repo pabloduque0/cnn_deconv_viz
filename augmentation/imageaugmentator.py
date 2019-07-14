@@ -11,6 +11,7 @@ import gc
 from keras.preprocessing.image import apply_affine_transform
 import random
 import cv2
+from augmentation import utils
 
 class ImageAugmentator():
 
@@ -29,7 +30,7 @@ class ImageAugmentator():
             raise ValueError("Wrong input. Image lists must be have the same length.")
 
         non_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
-        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = self.make_indices_groups(non_black_indices, 5)
+        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = utils.make_indices_groups(non_black_indices, 5)
         # Rotations
         rotated_xs, rotated_ys = self.perform_rotations(dataset_x[idx_group1],
                                                         dataset_y[idx_group1])
@@ -98,22 +99,6 @@ class ImageAugmentator():
         output_y = images_y[idx_group1] * alpha + (1 - alpha) * images_y[idx_group2]
 
         return output_x, output_y
-
-
-    def make_indices_groups(self, indices, n_groups):
-
-        size_group = len(indices) // n_groups
-        list_groups = []
-        for i in range(n_groups):
-
-            if i < n_groups - 1:
-                group = indices[i * size_group : (i+1) * size_group]
-            else:
-                group = indices[i * size_group: ]
-
-            list_groups.append(sorted(list(group)))
-
-        return list_groups
 
 
     def sample_indices_groups(self, indices, n_groups):
