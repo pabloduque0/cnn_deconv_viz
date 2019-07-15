@@ -1,16 +1,9 @@
-from augmentation import gan
+from augmentation.combineds import simplegan
 import numpy as np
-from networks.ustepnet import UStepNet
-from networks.unet import Unet
-from networks.shallowunet import ShallowUnet
-from networks.stacknet import StackNet
 from preprocessing.imageparser import ImageParser
-from augmentation.imageaugmentator import ImageAugmentator
-from sklearn.model_selection import train_test_split
 from constants import *
 import gc
 import os
-import tensorflow as tf
 
 parser = ImageParser(path_utrech='../../Utrecht/subjects',
                      path_singapore='../../Singapore/subjects',
@@ -93,8 +86,8 @@ del data_t1, data_flair
 
 gc.collect()
 
-training_name = "gan_test1_v1"
+training_name = "gan_test1_v2"
 base_path = os.getcwd()
-GAN = gan.GenericGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]))
-GAN.train(all_data, final_label_imgs, base_path=base_path, training_name=training_name,
-          epochs=2000, batch_size=32, save_interval=100)
+GAN = simplegan.SimpleGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]), noise_shape=(12, 12, 2))
+GAN.train(all_data, base_path=base_path, training_name=training_name,
+          epochs=5000, batch_size=100, save_interval=100)
