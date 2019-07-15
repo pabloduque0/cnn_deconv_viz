@@ -3,10 +3,8 @@ import numpy as np
 
 def make_indices_groups(images, size_group=None, n_groups=None):
 
-    if size_group is None:
-        if n_groups is None:
-            raise Exception("Either size_group or n_groups must be passed to generate indices groups.")
-        size_group = len(images) // n_groups
+    if size_group is None and n_groups is None:
+        raise Exception("Either size_group or n_groups must be passed to generate indices groups.")
 
     if n_groups is None:
         n_groups = len(images) // size_group
