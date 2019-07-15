@@ -80,11 +80,11 @@ class MotherGAN:
 
     def generate_folders(self, base_path, training_name):
 
-        imgs_path = os.path.join(base_path, "generated_imgs", training_name)
+        imgs_path = os.path.join(base_path, "augmentation", "generated_imgs", training_name)
         if not os.path.exists(imgs_path):
             os.mkdir(imgs_path)
 
-        model_path = os.path.join(base_path, "gan_models", training_name)
+        model_path = os.path.join(base_path, "augmentation", "gan_models", training_name)
         if not os.path.exists(model_path):
             os.mkdir(model_path)
 
