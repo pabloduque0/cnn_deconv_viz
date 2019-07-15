@@ -29,7 +29,7 @@ class MotherGAN:
             n_batches = len(idx_batches)
             for i, batch_idx in enumerate(idx_batches):
 
-                batch_images = images[batch_idx]
+                batch_images = real_images[batch_idx]
                 noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
 
                 # Generate a half batch of new images
