@@ -5,9 +5,9 @@ from constants import *
 import gc
 import os
 
-parser = ImageParser(path_utrech='../../Utrecht/subjects',
-                     path_singapore='../../Singapore/subjects',
-                     path_amsterdam='../../GE3T/subjects')
+parser = ImageParser(path_utrech='../Utrecht/subjects',
+                     path_singapore='../Singapore/subjects',
+                     path_amsterdam='../GE3T/subjects')
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
 
 t1_utrecht, flair_utrecht, labels_utrecht, white_mask_utrecht, distance_utrecht = parser.get_all_sets_paths(utrech_dataset)
