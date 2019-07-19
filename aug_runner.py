@@ -26,6 +26,8 @@ print('Amsterdam: ', len(t1_amsterdam), len(flair_amsterdam), len(labels_amsterd
 LABELS DATA
 
 """
+
+rm_extra = 4
 final_label_imgs = parser.preprocess_all_labels([labels_utrecht,
                                                  labels_singapore,
                                                  labels_amsterdam], slice_shape, [UTRECH_N_SLICES,
@@ -37,11 +39,11 @@ T1 DATA
 
 '''
 utrecht_normalized_t1 = parser.preprocess_dataset_t1(t1_utrecht, slice_shape, UTRECH_N_SLICES,
-                                                     REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
+                                                     REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="minmax")
 singapore_normalized_t1 = parser.preprocess_dataset_t1(t1_singapore, slice_shape, SINGAPORE_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
+                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="minmax")
 amsterdam_normalized_t1 = parser.preprocess_dataset_t1(t1_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
+                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="minmax")
 
 del t1_utrecht, t1_singapore, t1_amsterdam
 
@@ -53,11 +55,11 @@ FLAIR DATA
 
 
 utrecht_stand_flairs = parser.preprocess_dataset_flair(flair_utrecht, slice_shape, UTRECH_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
+                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="minmax")
 singapore_stand_flairs = parser.preprocess_dataset_flair(flair_singapore, slice_shape, SINGAPORE_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
+                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="minmax")
 amsterdam_stand_flairs = parser.preprocess_dataset_flair(flair_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
-                                                       REMOVE_TOP, REMOVE_BOT, norm_type="minmax")
+                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="minmax")
 
 del flair_utrecht, flair_singapore, flair_amsterdam
 
