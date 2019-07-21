@@ -79,16 +79,17 @@ class MotherGAN:
 
     def save_imgs(self, imgs_path, epoch, n_imgs=5):
 
-        noise = np.random.normal(0, 1, (n_imgs , *self.noise_shape))
+        noise = np.random.normal(0, 1, (n_imgs, *self.noise_shape))
         gen_imgs = self.generator.predict(noise)
 
         # Rescale images 0 - 1
         gen_img = 0.5 * gen_imgs + 0.5
         for i in range(n_imgs):
             img_name = "generated_img_%d_epoch_%d.png" % (i, epoch)
-            re_scaled = (gen_img - np.min(gen_img)) * 255 / (np.max(gen_img) - np.min(gen_img))
+            this_img = gen_imgs[i, ...]
+            re_scaled = (this_img - np.min(this_img)) * 255 / (np.max(this_img) - np.min(this_img))
             cv2.imwrite(os.path.join(imgs_path, img_name),
-                        np.concatenate([re_scaled[i, :, :, 0], re_scaled[i, :, :, 1]], axis=1)*255)
+                        np.concatenate([re_scaled[:, :, 0], re_scaled[:, :, 1]], axis=1)*255)
 
 
     def generate_folders(self, base_path, training_name):
