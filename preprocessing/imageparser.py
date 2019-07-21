@@ -303,6 +303,22 @@ class ImageParser():
         normalized_list = np.concatenate(normalized_list)
         return normalized_list
 
+
+    def normalize_neg_pos_one(self, images_list, slice_number):
+
+        normalized_list = []
+
+        np_list = np.asanyarray(images_list)
+        for image_idx in range(np_list.shape[0] // slice_number):
+            this_section = np_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
+            normalized = 2. * (this_section - np.min(this_section)) / np.ptp(this_section) - 1
+            normalized_list.append(normalized)
+
+        normalized_list = np.concatenate(normalized_list)
+        return normalized_list
+
+
+
     def normalize_quantile(self, flair_list, slice_number):
 
         normalized_images = []
