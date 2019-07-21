@@ -1,4 +1,4 @@
-from augmentation.combineds import simplegan
+from augmentation.combineds import wassersteingan
 import numpy as np
 from preprocessing.imageparser import ImageParser
 from constants import *
@@ -88,8 +88,9 @@ del data_t1, data_flair
 
 gc.collect()
 
-training_name = "gan_test1_v2"
+training_name = "wasserstein_gan_test1_v1"
 base_path = os.getcwd()
 GAN = simplegan.SimpleGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]), noise_shape=(12, 12, 2))
+GAN = wassersteingan.WassersteinGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]), noise_shape=(128,))
 GAN.train(all_data, base_path=base_path, training_name=training_name,
           epochs=5000, batch_size=100, save_interval=100)
