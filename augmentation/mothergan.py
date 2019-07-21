@@ -51,7 +51,9 @@ class MotherGAN:
                 g_loss = self.combined.train_on_batch(noise, valid_y)
 
                 # Plot the progress
-                print ("Epoch %d/%d, batch %d/%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, epochs, i, n_batches, d_loss[0], 100*d_loss[1], g_loss))
+                print("Epoch %d/%d, batch %d/%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, epochs, i + 1,
+                                                                                             n_batches, d_loss[0],
+                                                                                             100*d_loss[1], g_loss))
                 # If at save interval => save generated image samples
                 if epoch % save_interval == 0:
                     self.save_imgs(imgs_path, epoch)
