@@ -7,9 +7,10 @@ import numpy as np
 import importlib
 from augmentation import utils
 
+
 class MotherGAN:
 
-    def __init__(self, generator, discriminator, combined, img_shape, noise_shape):
+    def __init__(self, generator, discriminator, combined, img_shape, noise_shape, clip_value=0.01):
 
         self.img_shape = img_shape
         self.noise_shape = noise_shape
@@ -18,8 +19,10 @@ class MotherGAN:
         self.discriminator = discriminator
         self.combined = combined
 
+        self.clip_value = clip_value
 
-    def train(self, real_images, base_path, training_name, epochs=2000, batch_size=100, save_interval=100):
+    def train(self, real_images, base_path, training_name, epochs=2000,
+              batch_size=100, save_interval=100, clip_weights=False):
 
         imgs_path, model_path = self.generate_folders(base_path, training_name)
         half_batch = batch_size//2
@@ -40,6 +43,13 @@ class MotherGAN:
                 d_loss_real = self.discriminator.train_on_batch(batch_images, np.ones((half_batch, 1)))
                 d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.zeros((half_batch, 1)))
                 d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+
+                if clip_weights:
+                    # Clip discriminator weights
+                    for l in self.discriminator.layers:
+                        weights = l.get_weights()
+                        weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
+                        l.set_weights(weights)
 
                 noise = np.random.normal(0, 1, (batch_size, *self.noise_shape))
 
