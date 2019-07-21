@@ -90,7 +90,7 @@ gc.collect()
 
 training_name = "wasserstein_gan_test1_v1"
 base_path = os.getcwd()
-GAN = simplegan.SimpleGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]), noise_shape=(12, 12, 2))
+print("HEREEEE ", (*all_data.shape[1:-1], all_data.shape[-1]))
 GAN = wassersteingan.WassersteinGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]), noise_shape=(128,))
 GAN.train(all_data, base_path=base_path, training_name=training_name,
           epochs=5000, batch_size=100, save_interval=100)
