@@ -16,10 +16,12 @@ class WassersteinGAN(MotherGAN):
         discriminator_model = wasserstein_discriminator.create_model(img_shape)
         # Build and compile the discriminator
         discriminator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
-                                    loss=metrics.wasserstein_loss, metrics=['accuracy'])
+                                    loss=metrics.wasserstein_loss)
 
         # Build and compile the generator
         generator_model = wasserstein_generator.create_model(noise_shape)
+        generator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
+                                loss=metrics.wasserstein_loss)
 
         # The generator takes noise as input and generated imgs
         z = layers.Input(shape=noise_shape)
