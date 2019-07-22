@@ -82,8 +82,6 @@ class MotherGAN:
         noise = np.random.normal(0, 1, (n_imgs, *self.noise_shape))
         gen_imgs = self.generator.predict(noise)
 
-        # Rescale images 0 - 1
-        gen_img = 0.5 * gen_imgs + 0.5
         for i in range(n_imgs):
             img_name = "generated_img_%d_epoch_%d.png" % (i, epoch)
             this_img = gen_imgs[i, ...]
