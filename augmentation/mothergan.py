@@ -89,7 +89,7 @@ class MotherGAN:
             this_img = gen_imgs[i, ...]
             re_scaled = (this_img - np.min(this_img)) * 255 / (np.max(this_img) - np.min(this_img))
             cv2.imwrite(os.path.join(imgs_path, img_name),
-                        np.concatenate([re_scaled[:, :, 0], re_scaled[:, :, 1]], axis=1)*255)
+                        np.concatenate([re_scaled[:, :, 0], re_scaled[:, :, 1]], axis=1))
 
 
     def generate_folders(self, base_path, training_name):
