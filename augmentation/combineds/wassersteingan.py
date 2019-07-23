@@ -58,7 +58,8 @@ class WassersteinGAN(MotherGAN):
             for i, batch_idx in enumerate(idx_batches):
 
                 batch_images = real_images[batch_idx]
-                discrim_mult_batches = idx_batches[np.random.randint(0, len(batch_images) - 1, self.n_discriminator - 1)]
+                rest_of_idx = np.random.randint(0, len(batch_images) - 1, self.n_discriminator - 1)
+                discrim_mult_batches = [idx_batches[jj] for jj in rest_of_idx]
                 discrim_mult_batches.append(batch_images)
 
                 for sub_batch in discrim_mult_batches:
