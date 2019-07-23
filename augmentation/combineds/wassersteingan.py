@@ -13,7 +13,7 @@ from augmentation import utils
 
 class WassersteinGAN(MotherGAN):
 
-    def __init__(self, img_shape, noise_shape):
+    def __init__(self, img_shape, noise_shape, n_discriminator=10):
 
         discriminator_model = wasserstein_discriminator.create_model(img_shape)
         # Build and compile the discriminator
@@ -40,6 +40,7 @@ class WassersteinGAN(MotherGAN):
         combined_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
                                loss=metrics.wasserstein_loss,
                                metrics=['accuracy'])
+        self.n_discriminator = n_discriminator
 
         super().__init__(generator_model, discriminator_model, combined_model, img_shape, noise_shape)
 
@@ -57,23 +58,25 @@ class WassersteinGAN(MotherGAN):
             for i, batch_idx in enumerate(idx_batches):
 
                 batch_images = real_images[batch_idx]
-                noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
 
-                # Generate a half batch of new images
-                generated_imgs = self.generator.predict(noise)
+                for _ in range(self.n_discriminator):
 
-                # Train the discriminator
-                self.discriminator.trainable = True
-                d_loss_real = self.discriminator.train_on_batch(batch_images, np.ones((half_batch, 1)))
-                d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.zeros((half_batch, 1)))
-                d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+                    noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
+                    # Generate a half batch of new images
+                    generated_imgs = self.generator.predict(noise)
 
-                if clip_weights:
-                    # Clip discriminator weights
-                    for l in self.discriminator.layers:
-                        weights = l.get_weights()
-                        weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
-                        l.set_weights(weights)
+                    # Train the discriminator
+                    self.discriminator.trainable = True
+                    d_loss_real = self.discriminator.train_on_batch(batch_images, np.ones((half_batch, 1)))
+                    d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.zeros((half_batch, 1)))
+                    d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+
+                    if clip_weights:
+                        # Clip discriminator weights
+                        for l in self.discriminator.layers:
+                            weights = l.get_weights()
+                            weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
+                            l.set_weights(weights)
 
                 noise = np.random.normal(0, 1, (batch_size, *self.noise_shape))
 
