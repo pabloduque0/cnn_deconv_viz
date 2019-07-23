@@ -58,8 +58,12 @@ class WassersteinGAN(MotherGAN):
             for i, batch_idx in enumerate(idx_batches):
 
                 batch_images = real_images[batch_idx]
+                discrim_mult_batches = real_images[np.random.randint(0, len(batch_images) - 1, self.n_discriminator - 1)]
+                discrim_mult_batches.append(batch_images)
 
-                for _ in range(self.n_discriminator):
+                for sub_batch in discrim_mult_batches:
+
+                    np.random.randint(0, )
 
                     noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
                     # Generate a half batch of new images
@@ -67,7 +71,7 @@ class WassersteinGAN(MotherGAN):
 
                     # Train the discriminator
                     self.discriminator.trainable = True
-                    d_loss_real = self.discriminator.train_on_batch(batch_images, np.ones((half_batch, 1)))
+                    d_loss_real = self.discriminator.train_on_batch(sub_batch, np.ones((half_batch, 1)))
                     d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.zeros((half_batch, 1)))
                     d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
