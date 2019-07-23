@@ -69,8 +69,8 @@ class WassersteinGAN(MotherGAN):
 
                     # Train the discriminator
                     self.discriminator.trainable = True
-                    d_loss_real = self.discriminator.train_on_batch(sub_batch, np.ones((half_batch, 1)))
-                    d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.zeros((half_batch, 1)))
+                    d_loss_real = self.discriminator.train_on_batch(sub_batch, -np.ones((half_batch, 1)))
+                    d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.ones((half_batch, 1)))
                     d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
 
                     if clip_weights:
@@ -84,7 +84,7 @@ class WassersteinGAN(MotherGAN):
 
                 # The generator wants the discriminator to label the generated samples
                 # as valid (ones)
-                valid_y = np.array([1] * batch_size)
+                valid_y = np.array([-1] * batch_size)
                 self.discriminator.trainable = False
                 # Train the generator
                 g_loss = self.combined.train_on_batch(noise, valid_y)
