@@ -16,12 +16,12 @@ class WassersteinGAN(MotherGAN):
         discriminator_model = wasserstein_discriminator.create_model(img_shape)
         # Build and compile the discriminator
         discriminator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
-                                    loss=metrics.wasserstein_loss)
+                                    loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # Build and compile the generator
         generator_model = wasserstein_generator.create_model(noise_shape)
         generator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
-                                loss=metrics.wasserstein_loss)
+                                loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # The generator takes noise as input and generated imgs
         z = layers.Input(shape=noise_shape)
@@ -35,11 +35,60 @@ class WassersteinGAN(MotherGAN):
         # The combined model  (stacked generator and discriminator) takes
         # noise as input => generates images => determines validity
         combined_model = models.Model(z, valid)
-        combined_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99), loss=metrics.wasserstein_loss)
+        combined_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
+                               loss=metrics.wasserstein_loss,
+                               metrics=['accuracy'])
 
         super().__init__(generator_model, discriminator_model, combined_model, img_shape, noise_shape)
 
 
 
+    def train(self, real_images, base_path, training_name, epochs=2000,
+              batch_size=100, save_interval=100, clip_weights=False):
 
+        imgs_path, model_path = self.generate_folders(base_path, training_name)
+        half_batch = batch_size//2
+
+        for epoch in range(epochs):
+            idx_batches = utils.make_indices_groups(real_images, size_group=half_batch)
+            n_batches = len(idx_batches)
+            for i, batch_idx in enumerate(idx_batches):
+
+                batch_images = real_images[batch_idx]
+                noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
+
+                # Generate a half batch of new images
+                generated_imgs = self.generator.predict(noise)
+
+                # Train the discriminator
+                self.discriminator.trainable = True
+                d_loss_real = self.discriminator.train_on_batch(batch_images, np.ones((half_batch, 1)))
+                d_loss_fake = self.discriminator.train_on_batch(generated_imgs, np.zeros((half_batch, 1)))
+                d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+
+                if clip_weights:
+                    # Clip discriminator weights
+                    for l in self.discriminator.layers:
+                        weights = l.get_weights()
+                        weights = [np.clip(w, -self.clip_value, self.clip_value) for w in weights]
+                        l.set_weights(weights)
+
+                noise = np.random.normal(0, 1, (batch_size, *self.noise_shape))
+
+                # The generator wants the discriminator to label the generated samples
+                # as valid (ones)
+                valid_y = np.array([1] * batch_size)
+                self.discriminator.trainable = False
+                # Train the generator
+                g_loss = self.combined.train_on_batch(noise, valid_y)
+
+                # Plot the progress
+                print("Epoch %d/%d, batch %d/%d [D loss: %f] [G loss: %f]" % (epoch, epochs, i + 1,
+                                                                              n_batches, 1 - d_loss[0],
+                                                                              1 - g_loss[0]))
+                # If at save interval => save generated image samples
+                if epoch % save_interval == 0:
+                    self.save_imgs(imgs_path, epoch)
+
+        self.save_all_models(model_path)
 
