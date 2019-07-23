@@ -63,9 +63,6 @@ class WassersteinGAN(MotherGAN):
                 discrim_mult_batches.append(batch_images)
 
                 for sub_batch in discrim_mult_batches:
-
-                    np.random.randint(0, )
-
                     noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
                     # Generate a half batch of new images
                     generated_imgs = self.generator.predict(noise)
