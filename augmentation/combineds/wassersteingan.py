@@ -8,6 +8,8 @@ from augmentation import metrics
 from keras import losses
 from keras import optimizers
 from augmentation.mothergan import MotherGAN
+from augmentation import utils
+
 
 class WassersteinGAN(MotherGAN):
 
@@ -15,12 +17,12 @@ class WassersteinGAN(MotherGAN):
 
         discriminator_model = wasserstein_discriminator.create_model(img_shape)
         # Build and compile the discriminator
-        discriminator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
+        discriminator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
                                     loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # Build and compile the generator
         generator_model = wasserstein_generator.create_model(noise_shape)
-        generator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
+        generator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
                                 loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # The generator takes noise as input and generated imgs
@@ -35,7 +37,7 @@ class WassersteinGAN(MotherGAN):
         # The combined model  (stacked generator and discriminator) takes
         # noise as input => generates images => determines validity
         combined_model = models.Model(z, valid)
-        combined_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
+        combined_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
                                loss=metrics.wasserstein_loss,
                                metrics=['accuracy'])
 
