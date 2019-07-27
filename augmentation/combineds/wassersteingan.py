@@ -53,13 +53,13 @@ class WassersteinGAN(MotherGAN):
         half_batch = batch_size//2
 
         for epoch in range(epochs):
-            idx_batches = utils.make_indices_groups(real_images, size_group=half_batch)
+            idx_batches = utils.make_indices_groups(real_images, size_group=half_batch*self.n_discriminator)
             n_batches = len(idx_batches)
             for i, batch_idx in enumerate(idx_batches):
 
                 batch_images = real_images[batch_idx]
                 idx_sub_batches = utils.make_indices_groups(batch_images,
-                                                        size_group=len(batch_images)//self.n_discriminator)
+                                                        size_group=half_batch)
 
                 for j in idx_sub_batches:
                     sub_batch = batch_images[j]
