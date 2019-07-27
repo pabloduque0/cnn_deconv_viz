@@ -4,6 +4,7 @@ from preprocessing.imageparser import ImageParser
 from constants import *
 import gc
 import os
+import cv2
 
 parser = ImageParser(path_utrech='../Utrecht/subjects',
                      path_singapore='../Singapore/subjects',
@@ -27,7 +28,7 @@ LABELS DATA
 
 """
 
-rm_extra = 4
+rm_extra = 6
 final_label_imgs = parser.preprocess_all_labels([labels_utrecht,
                                                  labels_singapore,
                                                  labels_amsterdam], slice_shape, [UTRECH_N_SLICES,
@@ -103,4 +104,4 @@ base_path = os.getcwd()
 print("HEREEEE ", (*all_data.shape[1:-1], all_data.shape[-1]))
 GAN = wassersteingan.WassersteinGAN(img_shape=(*all_data.shape[1:-1], all_data.shape[-1]), noise_shape=(128,))
 GAN.train(all_data, base_path=base_path, training_name=training_name,
-          epochs=5000, batch_size=100, save_interval=100)
+          epochs=5000, batch_size=64, save_interval=50)

@@ -13,16 +13,16 @@ from augmentation import utils
 
 class WassersteinGAN(MotherGAN):
 
-    def __init__(self, img_shape, noise_shape, n_discriminator=10):
+    def __init__(self, img_shape, noise_shape, n_discriminator=8):
 
         discriminator_model = wasserstein_discriminator.create_model(img_shape)
         # Build and compile the discriminator
-        discriminator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
+        discriminator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0.5, beta_2=0.99),
                                     loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # Build and compile the generator
         generator_model = wasserstein_generator.create_model(noise_shape)
-        generator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
+        generator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0.5, beta_2=0.99),
                                 loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # The generator takes noise as input and generated imgs
@@ -37,7 +37,7 @@ class WassersteinGAN(MotherGAN):
         # The combined model  (stacked generator and discriminator) takes
         # noise as input => generates images => determines validity
         combined_model = models.Model(z, valid)
-        combined_model.compile(optimizers.Adam(lr=0.0001, beta_1=0, beta_2=0.99),
+        combined_model.compile(optimizers.Adam(lr=0.0001, beta_1=0.5, beta_2=0.99),
                                loss=metrics.wasserstein_loss,
                                metrics=['accuracy'])
         self.n_discriminator = n_discriminator
@@ -58,11 +58,11 @@ class WassersteinGAN(MotherGAN):
             for i, batch_idx in enumerate(idx_batches):
 
                 batch_images = real_images[batch_idx]
-                rest_of_idx = np.random.randint(0, len(batch_images) - 1, self.n_discriminator - 1)
-                discrim_mult_batches = [real_images[idx_batches[jj]] for jj in rest_of_idx]
-                discrim_mult_batches.append(batch_images)
+                idx_sub_batches = utils.make_indices_groups(batch_images,
+                                                        size_group=len(batch_images)//self.n_discriminator)
 
-                for sub_batch in discrim_mult_batches:
+                for j in idx_sub_batches:
+                    sub_batch = batch_images[j]
                     noise = np.random.normal(0, 1, (half_batch, *self.noise_shape))
                     # Generate a half batch of new images
                     generated_imgs = self.generator.predict(noise)
