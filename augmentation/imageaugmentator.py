@@ -30,7 +30,7 @@ class ImageAugmentator():
             raise ValueError("Wrong input. Image lists must be have the same length.")
 
         non_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
-        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = utils.make_indices_groups(non_black_indices, 5)
+        idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = utils.make_indices_groups(non_black_indices, len(non_black_indices)//5)
         # Rotations
         rotated_xs, rotated_ys = self.perform_rotations(dataset_x[idx_group1],
                                                         dataset_y[idx_group1])
