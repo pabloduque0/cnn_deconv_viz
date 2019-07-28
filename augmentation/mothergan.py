@@ -68,16 +68,23 @@ class MotherGAN:
 
         self.generator.save(os.path.join(model_path, "generator.h5"))
         self.discriminator.save(os.path.join(model_path, "discriminator.h5"))
-        self.combined.save(os.path.join(model_path, "combined.h5"))
+        try:
+            self.combined.save(os.path.join(model_path, "combined.h5"))
+        except:
+            print("Not saving combined model")
 
-    def save_imgs(self, imgs_path, epoch, n_imgs=5):
 
-        noise = np.random.normal(0, 1, (n_imgs, *self.noise_shape))
+    def save_imgs(self, imgs_path, epoch, total_images=100, get_n_best=10):
+
+        noise = np.random.normal(0, 1, (total_images, *self.noise_shape))
         gen_imgs = self.generator.predict(noise)
+        images_mark = self.discriminator.predict(gen_imgs).reshape((total_images))
+        order = np.argsort(-images_mark)[:get_n_best]
+        images_final = gen_imgs[order, ...]
 
-        for i in range(n_imgs):
-            img_name = "generated_img_%d_epoch_%d.png" % (i, epoch)
-            this_img = gen_imgs[i, ...]
+        for i in range(get_n_best):
+            img_name = "%d_%d_generated_img.png" % (epoch, i)
+            this_img = images_final[i, ...]
             re_scaled = (this_img - np.min(this_img)) * 255 / (np.max(this_img) - np.min(this_img))
             cv2.imwrite(os.path.join(imgs_path, img_name),
                         np.concatenate([re_scaled[:, :, 0], re_scaled[:, :, 1]], axis=1))
