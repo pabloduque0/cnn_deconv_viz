@@ -15,7 +15,6 @@ def create_model(input_shape, sub_start_shape=(6, 6, 128)):
     dense_2 = layers.Dense(np.prod(list(sub_start_shape)))(lr_1)
     bn_1 = layers.BatchNormalization()(dense_2)
     lr_2 = layers.LeakyReLU()(bn_1)
-    print("prior shape: ", K.int_shape(lr_2))
     reshaped = layers.Reshape(sub_start_shape, input_shape=(np.prod(list(sub_start_shape)),))(lr_2)
     bn_axis = -1
     conv_1 = layers.Conv2DTranspose(512, (5, 5), strides=2, padding='same')(reshaped)
@@ -36,7 +35,7 @@ def create_model(input_shape, sub_start_shape=(6, 6, 128)):
     bn_6 = layers.BatchNormalization(axis=bn_axis)(conv_4)
     lr_7 = layers.LeakyReLU()(bn_6)
 
-    conv_5 = layers.Conv2DTranspose(2, (5, 5), strides=2, padding='same')(lr_7)
+    conv_5 = layers.Conv2DTranspose(2, (5, 5), strides=2, activation="tanh", padding='same')(lr_7)
 
     model = models.Model(inputs=input_layer, outputs=conv_5)
     model.summary()
