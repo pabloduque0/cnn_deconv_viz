@@ -77,11 +77,12 @@ class ImageParser():
         return t1, flair, labels, white_mask, distance
 
 
-    def preprocess_all_labels(self, labels_paths_list, slice_shape, n_slices_all):
+    def preprocess_all_labels(self, labels_paths_list, slice_shape, n_slices_all, remove_top, remove_bot):
 
         all_labels = []
         for label_paths, n_slices in zip(labels_paths_list, n_slices_all):
-            preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape, n_slices)
+            preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape, n_slices,
+                                                                 remove_top, remove_bot)
             all_labels.append(preprocessed_labels)
 
         final_label_imgs = np.concatenate(all_labels, axis=0)
