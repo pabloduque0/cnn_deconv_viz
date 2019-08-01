@@ -94,7 +94,9 @@ class ImageParser():
 
         data_t1 = self.get_all_images_np_twod(data_t1)
         resized_t1 = self.resize_slices(data_t1, slice_shape)
-        resized_t1 = self.remove_top_bot_slices(resized_t1, n_slices)
+        resized_t1 = self.remove_top_bot_slices(resized_t1, n_slices,
+                                                remove_n_top=remove_top,
+                                                remove_n_bot=remove_bot)
         if norm_type == "stand":
             normalized_t1 = self.standarize(resized_t1, n_slices - remove_top - remove_bot)
         else:
@@ -104,19 +106,23 @@ class ImageParser():
     def preprocess_dataset_flair(self, data_flair, slice_shape, n_slices, remove_top, remove_bot, norm_type="stand"):
         data_flair = self.get_all_images_np_twod(data_flair)
         resized_flairs = self.resize_slices(data_flair, slice_shape)
-        resized_flairs = self.remove_top_bot_slices(resized_flairs, n_slices)
+        resized_flairs = self.remove_top_bot_slices(resized_flairs, n_slices,
+                                                    remove_n_top=remove_top,
+                                                    remove_n_bot=remove_bot)
         if norm_type == "stand":
             norm_flairs = self.standarize(resized_flairs, n_slices - remove_top - remove_bot)
         else:
             norm_flairs = self.normalize_minmax(resized_flairs, n_slices - remove_top - remove_bot)
         return norm_flairs
 
-    def preprocess_dataset_labels(self, label_paths, slice_shape, n_slices):
+    def preprocess_dataset_labels(self, label_paths, slice_shape, n_slices, remove_top, remove_bot):
 
         labels_imgs = self.get_all_images_np_twod(label_paths)
         labels_resized = self.resize_slices(labels_imgs, slice_shape)
         labels_resized = self.remove_third_label(labels_resized)
-        labels_resized = self.remove_top_bot_slices(labels_resized, n_slices)
+        labels_resized = self.remove_top_bot_slices(labels_resized, n_slices,
+                                                    remove_n_top=remove_top,
+                                                    remove_n_bot=remove_bot)
 
         return labels_resized
 
