@@ -33,7 +33,10 @@ final_label_imgs = parser.preprocess_all_labels([labels_utrecht,
                                                  labels_singapore,
                                                  labels_amsterdam], slice_shape, [UTRECH_N_SLICES,
                                                                                   SINGAPORE_N_SLICES,
-                                                                                  AMSTERDAM_N_SLICES])
+                                                                                  AMSTERDAM_N_SLICES],
+                                                REMOVE_TOP + rm_extra,
+                                                REMOVE_BOT + rm_extra)
+
 '''
 
 T1 DATA
