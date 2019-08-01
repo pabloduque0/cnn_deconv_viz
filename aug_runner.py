@@ -28,14 +28,16 @@ LABELS DATA
 
 """
 
-rm_extra = 6
+rm_extra = 15
+rm_extra_amsterdam = 15
 final_label_imgs = parser.preprocess_all_labels([labels_utrecht,
                                                  labels_singapore,
                                                  labels_amsterdam], slice_shape, [UTRECH_N_SLICES,
                                                                                   SINGAPORE_N_SLICES,
                                                                                   AMSTERDAM_N_SLICES],
                                                 REMOVE_TOP + rm_extra,
-                                                REMOVE_BOT + rm_extra)
+                                                REMOVE_BOT + rm_extra,
+                                                rm_extra_amsterdam)
 
 '''
 
@@ -52,8 +54,9 @@ singapore_normalized_t1 = parser.preprocess_dataset_t1(t1_singapore, slice_shape
 singapore_normalized_t1 = parser.normalize_neg_pos_one(singapore_normalized_t1, SINGAPORE_N_SLICES - rm_total)
 
 amsterdam_normalized_t1 = parser.preprocess_dataset_t1(t1_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
-                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="stand")
-amsterdam_normalized_t1 = parser.normalize_neg_pos_one(amsterdam_normalized_t1, AMSTERDAM_N_SLICES - rm_total)
+                                                       REMOVE_TOP + rm_extra + rm_extra_amsterdam,
+                                                       REMOVE_BOT + rm_extra + rm_extra_amsterdam, norm_type="stand")
+amsterdam_normalized_t1 = parser.normalize_neg_pos_one(amsterdam_normalized_t1, AMSTERDAM_N_SLICES - rm_total - 2 * rm_extra_amsterdam)
 del t1_utrecht, t1_singapore, t1_amsterdam
 
 '''
@@ -72,8 +75,9 @@ singapore_stand_flairs = parser.preprocess_dataset_flair(flair_singapore, slice_
 singapore_stand_flairs = parser.normalize_neg_pos_one(singapore_stand_flairs, SINGAPORE_N_SLICES - rm_total)
 
 amsterdam_stand_flairs = parser.preprocess_dataset_flair(flair_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
-                                                       REMOVE_TOP + rm_extra, REMOVE_BOT + rm_extra, norm_type="stand")
-amsterdam_stand_flairs = parser.normalize_neg_pos_one(amsterdam_stand_flairs, AMSTERDAM_N_SLICES - rm_total)
+                                                         REMOVE_TOP + rm_extra + rm_extra_amsterdam,
+                                                         REMOVE_BOT + rm_extra + rm_extra_amsterdam, norm_type="stand")
+amsterdam_stand_flairs = parser.normalize_neg_pos_one(amsterdam_stand_flairs, AMSTERDAM_N_SLICES - rm_total - 2 * rm_extra_amsterdam)
 
 del flair_utrecht, flair_singapore, flair_amsterdam
 
