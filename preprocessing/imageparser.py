@@ -84,8 +84,8 @@ class ImageParser():
             preprocessed_labels = None
             if n_slices == 83: # Amsterdam
                 preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape, n_slices,
-                                                                     remove_top + rm_extra_amsterdam,
-                                                                     remove_bot + rm_extra_amsterdam)
+                                                                     remove_top + rm_extra_amsterdam[0],
+                                                                     remove_bot + rm_extra_amsterdam[1])
             else:
                 preprocessed_labels = self.preprocess_dataset_labels(label_paths, slice_shape, n_slices,
                                                                  remove_top, remove_bot)
