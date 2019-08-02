@@ -1,5 +1,4 @@
 
-import funciones_wgan as f
 import numpy as np
 import cv2
 from keras.models import Model, Sequential
@@ -11,7 +10,6 @@ from keras.optimizers import Adam
 from keras.datasets import mnist
 from keras import backend as K
 import matplotlib.pyplot as plt
-%matplotlib inline
 from time import time
 import tensorflow as tf
 import os
@@ -128,7 +126,7 @@ def generate_images(generator_model, output_dir, epoch, n_images, method='FLAIR'
             plt.imshow(image[..., 1], cmap='gray')
 
     fig.set_size_inches(np.array(fig.get_size_inches()) * n_images)
-    fig.savefig(f'{output_dir}{method}/epoch_{epoch}.png')
+    fig.savefig(output_dir + str(method) + "/epoch_" + str(epoch) + ".png")
     plt.close(fig)
 
 def sample_best_images(generator_model, discriminator, output_dir, epoch='No', n_images = 10, n_images_total = 100, flag = [1]):
@@ -151,11 +149,11 @@ def sample_best_images(generator_model, discriminator, output_dir, epoch='No', n
         for n, image in enumerate(images_final):
             a = figFLAIR.add_subplot(np.ceil(n_images / float(cols)), cols, n + 1)
             plt.imshow(image[..., 1], cmap='gray')
-        if not os.path.isdir(f'{output_dir}FLAIR/'):
-            os.mkdir(f'{output_dir}FLAIR/')
+        if not os.path.isdir(output_dir + "FLAIR/"):
+            os.mkdir(output_dir + "FLAIR/")
 
         figFLAIR.set_size_inches(np.array(figFLAIR.get_size_inches()) * n_images)
-        figFLAIR.savefig(f'{output_dir}FLAIR/epoch_{epoch}.png')
+        figFLAIR.savefig(output_dir + "FLAIR/epoch_" + str(epoch) + ".png")
         plt.close(figFLAIR)
 
         figT1 = plt.figure()
@@ -163,12 +161,12 @@ def sample_best_images(generator_model, discriminator, output_dir, epoch='No', n
             a = figT1.add_subplot(np.ceil(n_images / float(cols)), cols, n + 1)
             plt.imshow(image[..., 0], cmap='gray')
 
-        if not os.path.isdir(f'{output_dir}T1/'):
-            os.mkdir(f'{output_dir}T1/')
+        if not os.path.isdir(output_dir + "T1/"):
+            os.mkdir(output_dir + "T1/")
 
         figT1.set_size_inches(np.array(figT1.get_size_inches()) * n_images)
-        print(f'{output_dir}T1/epoch_{epoch}.png')
-        figT1.savefig(f'{output_dir}T1/epoch_{epoch}.png')
+        print(output_dir + "T1/epoch_" + str(epoch) + ".png")
+        figT1.savefig(output_dir + "T1/epoch_" + str(epoch) + ".png")
         plt.close(figT1)
 
         figMask = plt.figure()
@@ -176,12 +174,12 @@ def sample_best_images(generator_model, discriminator, output_dir, epoch='No', n
             a = figMask.add_subplot(np.ceil(n_images / float(cols)), cols, n + 1)
             plt.imshow(image[..., 2], cmap='gray')
 
-        if not os.path.isdir(f'{output_dir}Mask/'):
-            os.mkdir(f'{output_dir}Mask/')
+        if not os.path.isdir(output_dir + "Mask/"):
+            os.mkdir(output_dir + "Mask/")
 
         figMask.set_size_inches(np.array(figMask.get_size_inches()) * n_images)
-        print(f'{output_dir}Mask/epoch_{epoch}.png')
-        figMask.savefig(f'{output_dir}Mask/epoch_{epoch}.png')
+        print(output_dir + "Mask/epoch_" + str(epoch) + ".png")
+        figMask.savefig(output_dir + "Mask/epoch_" + str(epoch) + ".png")
         plt.close(figMask)
     elif 2 in flag:
         fig = np.empty((3,256, 256,1))
@@ -191,26 +189,26 @@ def sample_best_images(generator_model, discriminator, output_dir, epoch='No', n
 
         return fig
     elif 3 in flag:
-        if not os.path.isdir(f'{output_dir}Img_Grandes/'):
-            os.mkdir(f'{output_dir}Img_Grandes/')
-            os.mkdir(f'{output_dir}Img_Grandes/FLAIR')
-            os.mkdir(f'{output_dir}Img_Grandes/T1')
-            os.mkdir(f'{output_dir}Img_Grandes/MASK')
+        if not os.path.isdir(output_dir + "Img_Grandes/"):
+            os.mkdir(output_dir + "Img_Grandes/")
+            os.mkdir(output_dir + "Img_Grandes/FLAIR")
+            os.mkdir(output_dir + "Img_Grandes/T1")
+            os.mkdir(output_dir + "Img_Grandes/MASK")
         images_final_2 = images_final[:3, ...]
         for n, image in enumerate(images_final_2):
             imFLAIR = plt.figure()
             plt.imshow(image[...,1], cmap = 'gray')
-            imFLAIR.savefig(f'{output_dir}Img_Grandes/FLAIR/epoch{epoch}_n{n}')
+            imFLAIR.savefig(output_dir + "Img_Grandes/FLAIR/epoch_" + str(epoch) + "_n" + str(n))
             plt.close(imFLAIR)
 
             imT1 = plt.figure()
             plt.imshow(image[...,0], cmap = 'gray')
-            imFLAIR.savefig(f'{output_dir}Img_Grandes/T1/epoch{epoch}_n{n}')
+            imFLAIR.savefig(output_dir + "Img_Grandes/T1/epoch" + str(epoch) + "_n" + str(n))
             plt.close(imT1)
 
             imMASK= plt.figure()
             plt.imshow(image[...,2], cmap = 'gray')
-            imFLAIR.savefig(f'{output_dir}Img_Grandes/MASK/epoch{epoch}_n{n}')
+            imFLAIR.savefig(output_dir + "Img_Grandes/MASK/epoch" + str(epoch) + "_n" + str(n))
             plt.close(imMASK)
 
 
@@ -233,7 +231,7 @@ log_path = 'logs/'
 imagenes_muestra = None  # None para leer el completo
 
 kernel_size_generator = 4
-
+initial_epoch = 0
 final_epoch = initial_epoch + EPOCHS - 1
 
 
@@ -310,9 +308,16 @@ def make_generator():
     return model
 
 
+images = np.load('../../images_three_datasets_sorted.npy')
+masks = np.load('../../masks_three_datasets_sorted.npy')
 
+images = [2. * (image - np.min(image)) / np.ptp(image) - 1 for image in images]
 
-#imgs here
+images = np.concatenate((images, masks), axis=3)
+
+# El generador toma imágenes 256x256x3. Como las tenemos 200x200, hay que redimensionarlas:
+dim_final = (256, 256)
+images = np.array([cv2.resize(image, dim_final, interpolation=cv2.INTER_AREA) for image in images])
 
 n_images = images.shape[0]
 print(n_images)
