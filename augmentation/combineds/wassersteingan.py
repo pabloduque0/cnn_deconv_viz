@@ -22,8 +22,6 @@ class WassersteinGAN(MotherGAN):
 
         # Build and compile the generator
         generator_model = wasserstein_generator.create_model(noise_shape)
-        generator_model.compile(optimizers.Adam(lr=0.0001, beta_1=0.5, beta_2=0.99),
-                                loss=metrics.wasserstein_loss, metrics=['accuracy'])
 
         # The generator takes noise as input and generated imgs
         z = layers.Input(shape=noise_shape)
