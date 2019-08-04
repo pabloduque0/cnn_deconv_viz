@@ -308,12 +308,9 @@ def make_generator():
     return model
 
 
-images = np.load('../../images_three_datasets_sorted.npy')
-masks = np.load('../../masks_three_datasets_sorted.npy')
+images = np.load('../../muestra_seleccionada.npy')
 
 images = [2. * (image - np.min(image)) / np.ptp(image) - 1 for image in images]
-
-images = np.concatenate((images, masks), axis=3)
 
 # El generador toma imágenes 256x256x3. Como las tenemos 200x200, hay que redimensionarlas:
 dim_final = (256, 256)
