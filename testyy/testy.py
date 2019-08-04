@@ -467,8 +467,6 @@ for epoch in range(initial_epoch, final_epoch):
         image_board = sample_best_images(generator, discriminator, output_dir, epoch, 1, flag=[2])
 
         base_path = os.getcwd()
-        generator.save_weights(os.path.join("weights", "generator_epoch_" + str(epoch) + ".h5"))
-        discriminator.save_weights(os.path.join("weights", "discriminator_epoch_" + str(epoch) + ".h5"))
         imgs_path = os.path.join(base_path, "imgs")
         save_imgs(generator, discriminator, imgs_path, epoch, (INPUT_LEN,))
 
