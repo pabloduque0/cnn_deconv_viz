@@ -104,7 +104,7 @@ class RandomWeightedAverage(_Merge):
     """Takes a randomly-weighted average of two tensors. In geometric terms, this
     outputs a random point on the line between each pair of input points.
     Inheriting from _Merge is a little messy but it was the quickest solution I could
-    think of. Improvements appreciated."""
+    think o Improvements appreciated."""
 
     def _merge_function(self, inputs):
         weights = K.random_uniform((BATCH_SIZE, 1, 1, 1))
@@ -212,7 +212,24 @@ def sample_best_images(generator_model, discriminator, output_dir, epoch='No', n
             plt.close(imMASK)
 
 
-EPOCHS = 10000
+def save_imgs(generator, discriminator, imgs_path, epoch, noise_shape, total_images=100, get_n_best=10):
+
+    noise = np.random.normal(0, 1, (total_images, *noise_shape))
+    gen_imgs = generator.predict(noise)
+    images_mark = discriminator.predict(gen_imgs).reshape((total_images))
+    order = np.argsort(-images_mark)[:get_n_best]
+    images_final = gen_imgs[order, ...]
+
+    for i in range(get_n_best):
+        img_name = "%d_%d_generated_img.png" % (epoch, i)
+        this_img = images_final[i, ...]
+        re_scaled = (this_img - np.min(this_img)) * 255 / (np.max(this_img) - np.min(this_img))
+        cv2.imwrite(os.path.join(imgs_path, img_name),
+                    np.concatenate([re_scaled[:, :, 0], re_scaled[:, :, 1], re_scaled[:, :, 2]], axis=1))
+
+
+
+EPOCHS = 20000
 BATCH_SIZE = 8
 # The training ratio is the number of discriminator updates
 # per generator update. The paper uses 5.
@@ -331,7 +348,7 @@ generator_layers = generator(generator_input)
 discriminator_layers_for_generator = discriminator(generator_layers)
 generator_model = Model(inputs=[generator_input], outputs=[discriminator_layers_for_generator])
 # We use the Adam paramaters from Gulrajani et al.
-generator_model.compile(optimizer=Adam(0.0001, beta_1=0.5, beta_2=0.9), loss=f.wasserstein_loss)
+generator_model.compile(optimizer=Adam(0.0001, beta_1=0.5, beta_2=0.9), loss=wasserstein_loss)
 
 for layer in discriminator.layers:
     layer.trainable = True
@@ -354,14 +371,14 @@ discriminator_output_from_generator = discriminator(generated_samples_for_discri
 discriminator_output_from_real_samples = discriminator(real_samples)
 
 
-averaged_samples = f.RandomWeightedAverage()([real_samples,
+averaged_samples = RandomWeightedAverage()([real_samples,
                                             generated_samples_for_discriminator])
 # We then run these samples through the discriminator as well. Note that we never
 # really use the discriminator output for these samples - we're only running them to
 # get the gradient norm for the gradient penalty loss.
 averaged_samples_out = discriminator(averaged_samples)
 
-partial_gp_loss = f.partial(f.gradient_penalty_loss,
+partial_gp_loss = partial(gradient_penalty_loss,
                             averaged_samples=averaged_samples, gradient_penalty_weight=GRADIENT_PENALTY_WEIGHT)
 # Functions need names or Keras will throw an error
 partial_gp_loss.__name__ = 'gradient_penalty'
@@ -372,7 +389,7 @@ discriminator_model = Model(inputs=[real_samples, generator_input_for_discrimina
 
 
 discriminator_model.compile(optimizer=Adam(0.0001, beta_1=0.5, beta_2=0.9),
-                            loss=[f.wasserstein_loss, f.wasserstein_loss, partial_gp_loss])
+                            loss=[wasserstein_loss, wasserstein_loss, partial_gp_loss])
 
 # We make three label vectors for training. positive_y is the label vector for real
 # samples, with value 1. negative_y is the label vector for generated samples, with
@@ -391,7 +408,7 @@ print('Tenemos ', int(n_images // (BATCH_SIZE * TRAINING_RATIO)), ' minibatches.
 
 callback = TensorBoard(log_path)
 callback.set_model(generator_model)
-# file_writer = tf.summary.FileWriter(log_path)
+# file_writer = tsummary.FileWriter(log_path)
 
 discriminator_loss_mean = []
 generator_loss_mean = []
@@ -418,7 +435,7 @@ for epoch in range(initial_epoch, final_epoch):
             discriminator_loss_epoch.append(discriminator_loss_val)
 
             # PARA TENSORBOARD
-            f.write_log(callback, ['d_loss', 'd_loss_real', 'd_loss_fake'], [
+            write_log(callback, ['d_loss', 'd_loss_real', 'd_loss_fake'], [
                 discriminator_loss_val[0],
                 discriminator_loss_val[1],
                 discriminator_loss_val[2]
@@ -431,7 +448,7 @@ for epoch in range(initial_epoch, final_epoch):
         generator_loss_epoch.append(generator_loss_val)
 
         # ESCRIBIR PARA TENSORBOARD
-        f.write_log(callback, ['g_loss'], [generator_loss_val], minibatch_epochs)
+        write_log(callback, ['g_loss'], [generator_loss_val], minibatch_epochs)
 
         minibatch_epochs += 1
 
@@ -446,10 +463,17 @@ for epoch in range(initial_epoch, final_epoch):
         discriminator.save_weights('Weights/discriminator_epoch_' + str(epoch) + '.h5')
         print('Weights saved')
 
-        f.sample_best_images(generator, discriminator, output_dir, epoch, 10, flag=[1, 3])
-        image_board = f.sample_best_images(generator, discriminator, output_dir, epoch, 1, flag=[2])
+        sample_best_images(generator, discriminator, output_dir, epoch, 10, flag=[1, 3])
+        image_board = sample_best_images(generator, discriminator, output_dir, epoch, 1, flag=[2])
+
+        base_path = os.getcwd()
+        generator.save_weights(os.path.join("weights", "generator_epoch_" + str(epoch) + ".h5"))
+        discriminator.save_weights(os.path.join("weights", "discriminator_epoch_" + str(epoch) + ".h5"))
+        imgs_path = os.path.join(base_path, "imgs")
+        save_imgs(generator, discriminator, imgs_path, epoch, (INPUT_LEN,))
+
         # with file_writer.as_default():
-        #    tf.summary.image('Epoch_' + str(epoch), image_board, step=0
+        #    tsummary.image('Epoch_' + str(epoch), image_board, step=0
         # tbc.save_image('Epoch_' + str(epoch), image_board)
         if epoch - intervalo_guardado % 1000 != 0:
             try:
