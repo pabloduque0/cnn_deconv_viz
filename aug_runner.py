@@ -59,7 +59,8 @@ singapore_normalized_t1 = parser.normalize_neg_pos_one(singapore_normalized_t1, 
 amsterdam_normalized_t1 = parser.preprocess_dataset_t1(t1_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
                                                        REMOVE_TOP + rm_extra_top + rm_extra_amsterdam_top,
                                                        REMOVE_BOT + rm_extra_bot + rm_extra_amsterdam_bot, norm_type="stand")
-amsterdam_normalized_t1 = parser.normalize_neg_pos_one(amsterdam_normalized_t1, AMSTERDAM_N_SLICES - rm_total - rm_extra_amsterdam_bot - rm_extra_amsterdam_top)
+amsterdam_normalized_t1 = parser.normalize_neg_pos_one(amsterdam_normalized_t1,
+                                                       AMSTERDAM_N_SLICES - rm_total - rm_extra_amsterdam_bot - rm_extra_amsterdam_top)
 del t1_utrecht, t1_singapore, t1_amsterdam
 
 '''
@@ -80,7 +81,8 @@ singapore_stand_flairs = parser.normalize_neg_pos_one(singapore_stand_flairs, SI
 amsterdam_stand_flairs = parser.preprocess_dataset_flair(flair_amsterdam, slice_shape, AMSTERDAM_N_SLICES,
                                                          REMOVE_TOP + rm_extra_top + rm_extra_amsterdam_top,
                                                          REMOVE_BOT + rm_extra_bot + rm_extra_amsterdam_bot, norm_type="stand")
-amsterdam_stand_flairs = parser.normalize_neg_pos_one(amsterdam_stand_flairs, AMSTERDAM_N_SLICES - rm_total - rm_extra_amsterdam_bot - rm_extra_amsterdam_top)
+amsterdam_stand_flairs = parser.normalize_neg_pos_one(amsterdam_stand_flairs,
+                                                      AMSTERDAM_N_SLICES - rm_total - rm_extra_amsterdam_bot - rm_extra_amsterdam_top)
 
 del flair_utrecht, flair_singapore, flair_amsterdam
 
