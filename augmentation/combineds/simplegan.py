@@ -24,8 +24,6 @@ class SimpleGAN(MotherGAN):
 
         # Build and compile the generator
         generator_model = generator.create_model(noise_shape)
-        generator_model.compile(optimizers.Adam(lr=0.00001, beta_1=0, beta_2=0.99),
-                               loss=losses.binary_crossentropy)
 
         # The generator takes noise as input and generated imgs
         z = layers.Input(shape=noise_shape)
