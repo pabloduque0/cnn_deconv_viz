@@ -483,8 +483,5 @@ for epoch in range(initial_epoch, final_epoch):
             except:
                 pass
 
-        write_list(discriminator_loss_mean, file_discriminator)
-        write_list(generator_loss_mean, file_generator)
-
         discriminator_loss_mean = []
         generator_loss_mean = []

@@ -188,11 +188,13 @@ class RandomWeightedAverage(_Merge):
 
 
 
-from augmentation.combineds import wassersteingan
-from augmentation.combineds import wg_gp_gan
 import numpy as np
-from preprocessing.imageparser import ImageParser
+import sys
+sys.path.append("..")
 from constants import *
+sys.path.append("../preprocessing")
+from preprocessing.imageparser import ImageParser
+
 import gc
 import os
 import cv2
