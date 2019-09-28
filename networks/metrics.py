@@ -5,14 +5,13 @@ import numpy as np
 def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
     regular_dice = dice_coefficient(y_true, y_pred)
     recall = lession_recall(y_true, y_pred)
-
-    recall = tf.cond(tf.greater(recall, tf.Variable(1.0)), lambda: -recall, lambda: recall)
     return regular_dice + (recall * regular_dice * conn_comp_weight)
 
 def lession_recall(y_true, y_pred):
-    y_pred = y_true * y_pred
+    summed = y_true + 2 * y_pred
+    summed = tf.clip_by_value(summed - 2, clip_value_max=1, clip_value_min=0)
     conn_comp_true = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_true, axis=[-1]), tf.bool))
-    conn_comp_pred = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_pred, axis=[-1]), tf.bool))
+    conn_comp_pred = tf.contrib.image.connected_components(tf.cast(tf.squeeze(summed, axis=[-1]), tf.bool))
     n_conn_comp_true, _ = tf.unique(K.flatten(conn_comp_true))
     n_conn_comp_pred, _ = tf.unique(K.flatten(conn_comp_pred))
     lession_recall = (tf.size(n_conn_comp_pred) - 1) / (tf.size(n_conn_comp_true) - 1)
