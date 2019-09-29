@@ -2,21 +2,29 @@ from keras import backend as K
 import tensorflow as tf
 import numpy as np
 
-def custom_dice_coefficient(y_true, y_pred, conn_comp_weight=0.3):
+
+def custom_dice_coefficient(y_true, y_pred, recall_weight=0.3):
+    recall_weight = tf.Variable(recall_weight, dtype=tf.float32)
     regular_dice = dice_coefficient(y_true, y_pred)
     recall = lession_recall(y_true, y_pred)
-    return regular_dice + (recall * regular_dice * conn_comp_weight)
+    recall = tf.cast(recall, dtype=tf.float32)
+    recall_addition = recall * regular_dice * recall_weight
+    return regular_dice + recall_addition
+
 
 def lession_recall(y_true, y_pred):
-    summed = y_true + 2 * y_pred
-    summed = tf.clip_by_value(summed - 2, clip_value_max=1, clip_value_min=0)
     conn_comp_true = tf.contrib.image.connected_components(tf.cast(tf.squeeze(y_true, axis=[-1]), tf.bool))
-    conn_comp_pred = tf.contrib.image.connected_components(tf.cast(tf.squeeze(summed, axis=[-1]), tf.bool))
+    conn_comp_pred = conn_comp_true * tf.cast(tf.squeeze(y_pred, axis=[-1]), tf.int32)
+
     n_conn_comp_true, _ = tf.unique(K.flatten(conn_comp_true))
     n_conn_comp_pred, _ = tf.unique(K.flatten(conn_comp_pred))
-    lession_recall = (tf.size(n_conn_comp_pred) - 1) / (tf.size(n_conn_comp_true) - 1)
-    lession_recall = tf.cast(lession_recall, tf.float32)
-    return lession_recall
+    n_conn_comp_true = tf.size(n_conn_comp_true) - 1
+    n_conn_comp_pred = tf.size(n_conn_comp_pred) - 1
+
+    recall = tf.cond(tf.equal(n_conn_comp_pred, tf.Variable(0)),
+                     lambda: tf.Variable(1.0, dtype=tf.float64), lambda: n_conn_comp_pred / n_conn_comp_true)
+    return recall
+
 
 def thresholded_dice(y_true, y_pred):
     y_true = tf.math.floor(y_true + 0.6)
