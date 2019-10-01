@@ -97,29 +97,29 @@ class ImageParser():
         return final_label_imgs
 
 
-    def preprocess_dataset_t1(self, data_t1, slice_shape, n_slices, remove_top, remove_bot, norm_type="stand"):
+    def preprocess_dataset_t1(self, data_t1, slice_shape, n_slices, remove_top, remove_bot):
 
         data_t1 = self.get_all_images_np_twod(data_t1)
         resized_t1 = self.resize_slices(data_t1, slice_shape)
         resized_t1 = self.remove_top_bot_slices(resized_t1, n_slices,
                                                 remove_n_top=remove_top,
                                                 remove_n_bot=remove_bot)
-        if norm_type == "stand":
-            normalized_t1 = self.standarize(resized_t1, n_slices - remove_top - remove_bot)
-        else:
-            normalized_t1 = self.normalize_minmax(resized_t1, n_slices - remove_top - remove_bot)
+        actual_n_slices = n_slices - remove_top - remove_bot
+        stand_t1 = self.standarize(resized_t1, actual_n_slices)
+        normalized_t1 = self.normalize_minmax(stand_t1, actual_n_slices)
         return normalized_t1
 
-    def preprocess_dataset_flair(self, data_flair, slice_shape, n_slices, remove_top, remove_bot, norm_type="stand"):
+    def preprocess_dataset_flair(self, data_flair, slice_shape, n_slices, remove_top, remove_bot):
         data_flair = self.get_all_images_np_twod(data_flair)
         resized_flairs = self.resize_slices(data_flair, slice_shape)
         resized_flairs = self.remove_top_bot_slices(resized_flairs, n_slices,
                                                     remove_n_top=remove_top,
                                                     remove_n_bot=remove_bot)
-        if norm_type == "stand":
-            norm_flairs = self.standarize(resized_flairs, n_slices - remove_top - remove_bot)
-        else:
-            norm_flairs = self.normalize_minmax(resized_flairs, n_slices - remove_top - remove_bot)
+
+        actual_n_slices = n_slices - remove_top - remove_bot
+        stand_flairs = self.standarize(resized_flairs, actual_n_slices)
+        norm_flairs = self.normalize_minmax(stand_flairs, actual_n_slices)
+
         return norm_flairs
 
     def preprocess_dataset_labels(self, label_paths, slice_shape, n_slices, remove_top, remove_bot):
@@ -307,10 +307,9 @@ class ImageParser():
         np_list = np.asanyarray(images_list)
         for image_idx in range(np_list.shape[0]//slice_number):
             this_section = np_list[image_idx*slice_number:(image_idx+1)*slice_number, :, :]
-            flattened = np.ravel(this_section)
-            non_black = flattened[flattened > 0]
-            upper_threshold = np.max(non_black)
-            normalized = (this_section) / (upper_threshold)
+            section_max = np.max(this_section)
+            section_min = np.min(this_section)
+            normalized = (this_section - section_min) / (section_max - section_min)
             normalized_list.append(normalized)
 
         normalized_list = np.concatenate(normalized_list)
