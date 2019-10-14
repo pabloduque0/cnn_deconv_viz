@@ -195,7 +195,7 @@ class ImageParser():
     def process_all_images_np(self, paths_list, slice_shape, normalization=True):
         images = []
         for path in paths_list:
-            image = SimpleITK.imread(path)
+            image = SimpleITK.ReadImage(path)
             np_image = SimpleITK.GetArrayFromImage(image)
             np_image = np.swapaxes(np_image, 0, 2)
             resized = self.threed_resize(np_image, slice_shape)
