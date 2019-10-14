@@ -247,3 +247,5 @@ class BaseNetwork():
                         np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1))
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
+
+        return predictions
