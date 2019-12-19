@@ -18,11 +18,11 @@ def lession_recall(y_true, y_pred):
 
     n_conn_comp_true, _ = tf.unique(K.flatten(conn_comp_true))
     n_conn_comp_pred, _ = tf.unique(K.flatten(conn_comp_pred))
-    n_conn_comp_true = tf.size(n_conn_comp_true) - 1
-    n_conn_comp_pred = tf.size(n_conn_comp_pred) - 1
+    n_conn_comp_true = tf.size(input=n_conn_comp_true) - 1
+    n_conn_comp_pred = tf.size(input=n_conn_comp_pred) - 1
 
-    recall = tf.cond(tf.equal(n_conn_comp_pred, tf.Variable(0)),
-                     lambda: tf.Variable(1.0, dtype=tf.float64), lambda: n_conn_comp_pred / n_conn_comp_true)
+    recall = tf.cond(pred=tf.equal(n_conn_comp_pred, tf.Variable(0)),
+                     true_fn=lambda: tf.Variable(1.0, dtype=tf.float64), false_fn=lambda: n_conn_comp_pred / n_conn_comp_true)
     return recall
 
 
@@ -74,19 +74,19 @@ def weighted_crossentropy_pixelwise(y_true, y_pred):
 
 
 def prediction_count(y_true, y_pred):
-    return tf.count_nonzero(y_pred)
+    return tf.math.count_nonzero(y_pred)
 
 
 def label_count(y_true, y_pred):
-    return tf.count_nonzero(y_true)
+    return tf.math.count_nonzero(y_true)
 
 
 def prediction_sum(y_true, y_pred):
-    return tf.reduce_sum(y_pred)
+    return tf.reduce_sum(input_tensor=y_pred)
 
 
 def label_sum(y_true, y_pred):
-    return tf.reduce_sum(y_true)
+    return tf.reduce_sum(input_tensor=y_true)
 
 
 custom_dice_coef = custom_dice_coefficient
