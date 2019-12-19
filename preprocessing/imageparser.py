@@ -134,13 +134,18 @@ class ImageParser():
         return labels_resized
 
 
+    def fix_rotations(self, dataset):
+
+        pass
+
     def is_file_desired(self, file_name):
         possibilities = {"FLAIR_masked.nii.gz",
                             "FLAIR.nii.gz",
-                            "FLAIR.nii",
+                            "FLAIR_bet.nii.gz",
                             "T1_masked.nii.gz",
                             "T1.nii.gz",
-                            "T1.nii",
+                            "T1_bet.nii.gz",
+                            "T1_bet_mask.nii.gz",
                             "distWMborder_Danielsson.nii.gz",
                             "distWMborder_Maurer.nii.gz",
                             "WMmask.nii.gz",
@@ -152,8 +157,11 @@ class ImageParser():
 
         possibilities = {"FLAIR_masked.nii.gz": "flair_masked",
                          "FLAIR.nii.gz": "flair",
+                         "FLAIR_bet.nii.gz": "flair_bet",
                          "T1_masked.nii.gz": "t1_masked",
                          "T1.nii.gz": "t1",
+                         "T1_bet.nii.gz": "t1_bet",
+                         "T1_bet_mask.nii.gz": "new_mask",
                          "distWMborder_Danielsson.nii.gz": "danielsson_dist",
                          "distWMborder_Maurer.nii.gz": "maurer_dist",
                          "WMmask.nii.gz": "mask",
@@ -219,6 +227,7 @@ class ImageParser():
         for path in paths_list:
             image = SimpleITK.ReadImage(path)
             np_image = SimpleITK.GetArrayFromImage(image)
+
             if np_image.shape[1:] == (232, 256):
                 np_image = np.swapaxes(np_image, 1, 2)
                 print('Corrected axises')
