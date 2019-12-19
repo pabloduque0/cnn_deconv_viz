@@ -25,9 +25,9 @@ np.random.seed(seed_value)
 parser = ImageParser()
 utrech_dataset, singapore_dataset, amsterdam_dataset = parser.get_all_images_and_labels()
 
-t1_utrecht, flair_utrecht, labels_utrecht, white_mask_utrecht, distance_utrecht = parser.get_all_sets_paths(utrech_dataset)
-t1_singapore, flair_singapore, labels_singapore, white_mask_singapore, distance_singapore = parser.get_all_sets_paths(singapore_dataset)
-t1_amsterdam, flair_amsterdam, labels_amsterdam, white_mask_amsterdam, distance_amsterdam = parser.get_all_sets_paths(amsterdam_dataset)
+t1_utrecht, flair_utrecht, labels_utrecht, brain_mask_utrecht, distance_utrecht = parser.get_all_sets_paths(utrech_dataset)
+t1_singapore, flair_singapore, labels_singapore, brain_mask_singapore, distance_singapore = parser.get_all_sets_paths(singapore_dataset)
+t1_amsterdam, flair_amsterdam, labels_amsterdam, brain_mask_amsterdam, distance_amsterdam = parser.get_all_sets_paths(amsterdam_dataset)
 
 slice_shape = SLICE_SHAPE
 
@@ -221,22 +221,22 @@ import random
 random.seed(seed_value)
 
 # 4. Set the `tensorflow` pseudo-random generator at a fixed value
-tf.set_random_seed(seed_value)
+tf.compat.v1.set_random_seed(seed_value)
 
 # 5. Configure a new global `tensorflow` session
 from keras import backend as K
-session_conf = tf.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
-sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+session_conf = tf.compat.v1.ConfigProto(intra_op_parallelism_threads=1, inter_op_parallelism_threads=1)
+sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
 K.set_session(sess)
 
 
 gc.collect()
-training_name = '20191015_attention_gate_1'
+training_name = '20191219_bet_notenhanced_baseline'
 base_path = os.getcwd()
 
 print(data_train.shape, labels_train.shape, test_data.shape, labels_test.shape)
 unet = AttentionUnet(img_shape=data_train.shape[1:])
-unet.train(data_train, labels_train, (test_data, labels_test), training_name, base_path, epochs=50, batch_size=15)
+unet.train(data_train, labels_train, (test_data, labels_test), training_name, base_path, epochs=30, batch_size=18)
 
 
 '''
