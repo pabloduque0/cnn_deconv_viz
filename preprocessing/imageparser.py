@@ -57,9 +57,9 @@ class ImageParser():
                     data_and_labels[key] = filepath
 
                 length = len(data_and_labels)
-                if '/pre/' in filepath and self.is_file_desired(file) and length < 10 and length > 0:
+                if '/pre/' in filepath and self.is_file_desired(file) and length < 13 and length > 0:
                     data_and_labels[key] = filepath
-                    if len(data_and_labels) == 10:
+                    if len(data_and_labels) == 13:
                         full_dataset.append(data_and_labels.copy())
                         print(data_and_labels)
                         data_and_labels.clear()
@@ -68,10 +68,10 @@ class ImageParser():
 
     def get_all_sets_paths(self, dataset_paths):
 
-        t1 = [row["t1_masked"] for row in dataset_paths]
-        flair = [row["enhanced_masked"] for row in dataset_paths]
+        t1 = [row["t1_bet"] for row in dataset_paths]
+        flair = [row["flair_bet"] for row in dataset_paths]
         labels = [row["label"] for row in dataset_paths]
-        white_mask = [row["mask"] for row in dataset_paths]
+        white_mask = [row["new_mask"] for row in dataset_paths]
         distance = [row["danielsson_dist"] for row in dataset_paths]
 
         return t1, flair, labels, white_mask, distance
@@ -361,45 +361,6 @@ class ImageParser():
         normalized_images = np.concatenate(normalized_images, axis=0)
         return normalized_images
 
-
-    """
-    def find_best_quantile_normalization(self, image, non_black, labels_idx):
-
-        flair_not_labels_idx = np.where(np.delete(non_black, labels_idx) != None)
-
-        upper_base = 95.
-        max_difference = 0
-        best_upper_base = None
-
-        for i in range((int(100 - upper_base) * 10)):
-            lower_threshold, upper_threshold, upper_indexes, lower_indexes = self.get_thresholds_and_indexes(non_black,
-                                                                                                        upper_base)
-            normalized_perc = (non_black - lower_threshold) / (upper_threshold - lower_threshold)
-            normalized_perc[upper_indexes] = 1.0
-            normalized_perc[lower_indexes] = 0.0
-
-            normalized_minmax = (non_black - np.min(non_black)) / (np.max(non_black) - np.min(non_black))
-
-            mean_perc, std = norm.fit(normalized_perc[flair_not_labels_idx])
-            mean_idxs, std = norm.fit(normalized_perc[labels_idx])
-            diff_perc = abs(mean_perc - mean_idxs)
-
-            mean_minmax, std = norm.fit(normalized_minmax[flair_not_labels_idx])
-            mean_minmax_idxs, std = norm.fit(normalized_minmax[labels_idx])
-            diff_minmax = abs(mean_minmax - mean_minmax_idxs)
-
-            if abs(diff_perc - diff_minmax) > max_difference:
-                max_difference = abs(diff_perc - diff_minmax)
-                best_upper_base = upper_base
-
-            upper_base += .1
-
-
-        print("best_upper_base: ", best_upper_base)
-
-        return final_normalized
-    """
-
     def get_thresholds_and_indexes(self, non_black, upper_perc, full_image=None, lower_perc=0.5):
 
         lower_threshold = np.percentile(non_black, lower_perc)
@@ -518,3 +479,4 @@ class ImageParser():
 
                     print('OUTPUT: ', output)
                     print('ERROR: ', error)
+
