@@ -33,7 +33,7 @@ GRADIENT_PENALTY_WEIGHT = 10  # As per the paper
 
 def write_log(callback, names, logs, batch_no):
     for name, value in zip(names, logs):
-        summary = tf.Summary()
+        summary = tf.compat.v1.Summary()
         summary_value = summary.value.add()
         summary_value.simple_value = value
         summary_value.tag = name
@@ -482,9 +482,6 @@ for epoch in range(initial_epoch, final_epoch):
                 os.remove('./Weights/generator_epoch_' + str(epoch - intervalo_guardado) + '.h5')
             except:
                 pass
-
-        write_list(discriminator_loss_mean, file_discriminator)
-        write_list(generator_loss_mean, file_generator)
 
         discriminator_loss_mean = []
         generator_loss_mean = []

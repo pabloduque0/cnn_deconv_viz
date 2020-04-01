@@ -48,18 +48,18 @@ class ImageParser():
     def get_images_and_labels(self, path):
         full_dataset = []
         data_and_labels = {}
-
+        package_limit = 8
         for root, dirs, files in os.walk(path):
             for file in files:
-                filepath = root + '/' + file
+                filepath = os.path.join(root, file)
                 key = self.get_key(file)
                 if file == 'wmh.nii.gz':
                     data_and_labels[key] = filepath
 
                 length = len(data_and_labels)
-                if '/pre/' in filepath and self.is_file_desired(file) and length < 10 and length > 0:
+                if '/pre/' in filepath and self.is_file_desired(file) and length < package_limit and length > 0:
                     data_and_labels[key] = filepath
-                    if len(data_and_labels) == 10:
+                    if len(data_and_labels) == package_limit:
                         full_dataset.append(data_and_labels.copy())
                         print(data_and_labels)
                         data_and_labels.clear()
@@ -68,13 +68,12 @@ class ImageParser():
 
     def get_all_sets_paths(self, dataset_paths):
 
-        t1 = [row["t1_masked"] for row in dataset_paths]
-        flair = [row["enhanced_masked"] for row in dataset_paths]
+        t1 = [row["t1_coreg_brain"] for row in dataset_paths]
+        flair = [row["new_flair_enhanced"] for row in dataset_paths]
         labels = [row["label"] for row in dataset_paths]
-        white_mask = [row["mask"] for row in dataset_paths]
-        distance = [row["danielsson_dist"] for row in dataset_paths]
+        common_mask = [row["common_mask"] for row in dataset_paths]
 
-        return t1, flair, labels, white_mask, distance
+        return t1, flair, labels, common_mask
 
 
     def preprocess_all_labels(self, labels_paths_list, slice_shape, n_slices_all, remove_top, remove_bot, rm_extra_amsterdam):
@@ -97,29 +96,29 @@ class ImageParser():
         return final_label_imgs
 
 
-    def preprocess_dataset_t1(self, data_t1, slice_shape, n_slices, remove_top, remove_bot, norm_type="stand"):
+    def preprocess_dataset_t1(self, data_t1, slice_shape, n_slices, remove_top, remove_bot):
 
         data_t1 = self.get_all_images_np_twod(data_t1)
         resized_t1 = self.resize_slices(data_t1, slice_shape)
         resized_t1 = self.remove_top_bot_slices(resized_t1, n_slices,
                                                 remove_n_top=remove_top,
                                                 remove_n_bot=remove_bot)
-        if norm_type == "stand":
-            normalized_t1 = self.standarize(resized_t1, n_slices - remove_top - remove_bot)
-        else:
-            normalized_t1 = self.normalize_minmax(resized_t1, n_slices - remove_top - remove_bot)
+        actual_n_slices = n_slices - remove_top - remove_bot
+        stand_t1 = self.standarize(resized_t1, actual_n_slices)
+        normalized_t1 = self.normalize_minmax(stand_t1, actual_n_slices)
         return normalized_t1
 
-    def preprocess_dataset_flair(self, data_flair, slice_shape, n_slices, remove_top, remove_bot, norm_type="stand"):
+    def preprocess_dataset_flair(self, data_flair, slice_shape, n_slices, remove_top, remove_bot):
         data_flair = self.get_all_images_np_twod(data_flair)
         resized_flairs = self.resize_slices(data_flair, slice_shape)
         resized_flairs = self.remove_top_bot_slices(resized_flairs, n_slices,
                                                     remove_n_top=remove_top,
                                                     remove_n_bot=remove_bot)
-        if norm_type == "stand":
-            norm_flairs = self.standarize(resized_flairs, n_slices - remove_top - remove_bot)
-        else:
-            norm_flairs = self.normalize_minmax(resized_flairs, n_slices - remove_top - remove_bot)
+
+        actual_n_slices = n_slices - remove_top - remove_bot
+        stand_flairs = self.standarize(resized_flairs, actual_n_slices)
+        norm_flairs = self.normalize_minmax(stand_flairs, actual_n_slices)
+
         return norm_flairs
 
     def preprocess_dataset_labels(self, label_paths, slice_shape, n_slices, remove_top, remove_bot):
@@ -134,32 +133,40 @@ class ImageParser():
         return labels_resized
 
 
+    def fix_rotations(self, dataset):
+
+        pass
+
     def is_file_desired(self, file_name):
         possibilities = {"FLAIR_masked.nii.gz",
                             "FLAIR.nii.gz",
-                            "FLAIR.nii",
+                            "FLAIR_bet.nii.gz",
                             "T1_masked.nii.gz",
                             "T1.nii.gz",
-                            "T1.nii",
-                            "distWMborder_Danielsson.nii.gz",
-                            "distWMborder_Maurer.nii.gz",
-                            "WMmask.nii.gz",
+                            "T1_bet.nii.gz",
+                            "T1_bet_mask.nii.gz",
                             "FLAIR_enhanced_lb_masked.nii.gz",
-                            "FLAIR_enhanced_lb.nii.gz"}
+                            "FLAIR_enhanced_lb.nii.gz",
+                            "FLAIR-enhanced.nii.gz",
+                            "T1_bet_mask_rsfl.nii.gz",
+                            "T1_rsfl.nii.gz"}
         return file_name in possibilities
 
     def get_key(self, file_name):
 
         possibilities = {"FLAIR_masked.nii.gz": "flair_masked",
                          "FLAIR.nii.gz": "flair",
+                         "FLAIR_bet.nii.gz": "flair_bet",
                          "T1_masked.nii.gz": "t1_masked",
                          "T1.nii.gz": "t1",
-                         "distWMborder_Danielsson.nii.gz": "danielsson_dist",
-                         "distWMborder_Maurer.nii.gz": "maurer_dist",
-                         "WMmask.nii.gz": "mask",
+                         "T1_bet.nii.gz": "t1_bet",
+                         "T1_bet_mask.nii.gz": "new_mask",
                          "wmh.nii.gz": "label",
                          "FLAIR_enhanced_lb_masked.nii.gz": "enhanced_masked",
-                         "FLAIR_enhanced_lb.nii.gz": "enhanced"}
+                         "FLAIR_enhanced_lb.nii.gz": "enhanced",
+                         "FLAIR-enhanced.nii.gz": "new_flair_enhanced",
+                         "T1_bet_mask_rsfl.nii.gz": "common_mask",
+                         "T1_rsfl.nii.gz": "t1_coreg_brain"}
 
         if file_name not in possibilities:
             return None
@@ -195,7 +202,7 @@ class ImageParser():
     def process_all_images_np(self, paths_list, slice_shape, normalization=True):
         images = []
         for path in paths_list:
-            image = SimpleITK.imread(path)
+            image = SimpleITK.ReadImage(path)
             np_image = SimpleITK.GetArrayFromImage(image)
             np_image = np.swapaxes(np_image, 0, 2)
             resized = self.threed_resize(np_image, slice_shape)
@@ -219,6 +226,7 @@ class ImageParser():
         for path in paths_list:
             image = SimpleITK.ReadImage(path)
             np_image = SimpleITK.GetArrayFromImage(image)
+
             if np_image.shape[1:] == (232, 256):
                 np_image = np.swapaxes(np_image, 1, 2)
                 print('Corrected axises')
@@ -250,7 +258,7 @@ class ImageParser():
             elif slice.shape[0] > to_slice_shape[0]:
                 diff = slice.shape[0] - to_slice_shape[0]
                 if self.is_odd(diff):
-                    slice_copy = slice_copy[diff//2 : -diff//2 + 1, :]
+                    slice_copy = slice_copy[diff // 2: -diff//2, :]
                 else:
                     slice_copy = slice_copy[diff // 2: -diff // 2, :]
 
@@ -267,7 +275,7 @@ class ImageParser():
             elif slice.shape[1] > to_slice_shape[1]:
                 diff = slice.shape[1] - to_slice_shape[1]
                 if self.is_odd(diff):
-                    slice_copy = slice_copy[:, diff // 2: -diff // 2 + 1]
+                    slice_copy = slice_copy[:, diff // 2: -diff // 2]
                 else:
                     slice_copy = slice_copy[:, diff // 2: -diff // 2]
 
@@ -307,10 +315,9 @@ class ImageParser():
         np_list = np.asanyarray(images_list)
         for image_idx in range(np_list.shape[0]//slice_number):
             this_section = np_list[image_idx*slice_number:(image_idx+1)*slice_number, :, :]
-            flattened = np.ravel(this_section)
-            non_black = flattened[flattened > 0]
-            upper_threshold = np.max(non_black)
-            normalized = (this_section) / (upper_threshold)
+            section_max = np.max(this_section)
+            section_min = np.min(this_section)
+            normalized = (this_section - section_min) / (section_max - section_min)
             normalized_list.append(normalized)
 
         normalized_list = np.concatenate(normalized_list)
@@ -352,45 +359,6 @@ class ImageParser():
 
         normalized_images = np.concatenate(normalized_images, axis=0)
         return normalized_images
-
-
-    """
-    def find_best_quantile_normalization(self, image, non_black, labels_idx):
-
-        flair_not_labels_idx = np.where(np.delete(non_black, labels_idx) != None)
-
-        upper_base = 95.
-        max_difference = 0
-        best_upper_base = None
-
-        for i in range((int(100 - upper_base) * 10)):
-            lower_threshold, upper_threshold, upper_indexes, lower_indexes = self.get_thresholds_and_indexes(non_black,
-                                                                                                        upper_base)
-            normalized_perc = (non_black - lower_threshold) / (upper_threshold - lower_threshold)
-            normalized_perc[upper_indexes] = 1.0
-            normalized_perc[lower_indexes] = 0.0
-
-            normalized_minmax = (non_black - np.min(non_black)) / (np.max(non_black) - np.min(non_black))
-
-            mean_perc, std = norm.fit(normalized_perc[flair_not_labels_idx])
-            mean_idxs, std = norm.fit(normalized_perc[labels_idx])
-            diff_perc = abs(mean_perc - mean_idxs)
-
-            mean_minmax, std = norm.fit(normalized_minmax[flair_not_labels_idx])
-            mean_minmax_idxs, std = norm.fit(normalized_minmax[labels_idx])
-            diff_minmax = abs(mean_minmax - mean_minmax_idxs)
-
-            if abs(diff_perc - diff_minmax) > max_difference:
-                max_difference = abs(diff_perc - diff_minmax)
-                best_upper_base = upper_base
-
-            upper_base += .1
-
-
-        print("best_upper_base: ", best_upper_base)
-
-        return final_normalized
-    """
 
     def get_thresholds_and_indexes(self, non_black, upper_perc, full_image=None, lower_perc=0.5):
 
@@ -510,3 +478,4 @@ class ImageParser():
 
                     print('OUTPUT: ', output)
                     print('ERROR: ', error)
+

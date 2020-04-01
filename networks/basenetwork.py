@@ -95,13 +95,13 @@ class BaseNetwork():
             os.makedirs(model_path)
 
         v = 0
-        weights_path = model_path + "/model_0.hdf5"
+        weights_path = model_path + "/model_{}_0.hdf5".format(training_name)
         if os.path.exists(weights_path):
             try:
                 v = int(weights_path.split("_")[-1].replace(".hdf5", "")) + 1
             except ValueError:
                 v = 1
-            weights_path = model_path + "/model_{}.hdf5".format(v)
+            weights_path = model_path + "/model_{}_{}.hdf5".format(training_name, v)
 
         full_paths_dict["weights_path"] = weights_path
 
@@ -134,8 +134,10 @@ class BaseNetwork():
         self.training_name = training_name
 
         checkpointer = ModelCheckpoint(filepath=self.full_paths_dict["weights_path"],
-                                       save_best_only=True,
+                                       save_best_only=False,
                                        verbose=1)
+
+        print(self.full_paths_dict["weights_path"])
 
         tensorboard_callback = TensorBoard(log_dir=self.full_paths_dict["log_path"],
                                            batch_size=batch_size,
@@ -247,3 +249,5 @@ class BaseNetwork():
                         np.concatenate([original[:, :, 0], original[:, :, 1]], axis=1))
             cv2.imwrite(output_path + 'prediction_' + str(index) + '.png', pred * 255)
             cv2.imwrite(output_path + 'label_' + str(index) + '.png', label * 255)
+
+        return predictions
