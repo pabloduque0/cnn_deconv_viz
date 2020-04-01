@@ -48,18 +48,18 @@ class ImageParser():
     def get_images_and_labels(self, path):
         full_dataset = []
         data_and_labels = {}
-
+        package_limit = 8
         for root, dirs, files in os.walk(path):
             for file in files:
-                filepath = root + '/' + file
+                filepath = os.path.join(root, file)
                 key = self.get_key(file)
                 if file == 'wmh.nii.gz':
                     data_and_labels[key] = filepath
 
                 length = len(data_and_labels)
-                if '/pre/' in filepath and self.is_file_desired(file) and length < 13 and length > 0:
+                if '/pre/' in filepath and self.is_file_desired(file) and length < package_limit and length > 0:
                     data_and_labels[key] = filepath
-                    if len(data_and_labels) == 13:
+                    if len(data_and_labels) == package_limit:
                         full_dataset.append(data_and_labels.copy())
                         print(data_and_labels)
                         data_and_labels.clear()
@@ -68,13 +68,12 @@ class ImageParser():
 
     def get_all_sets_paths(self, dataset_paths):
 
-        t1 = [row["t1_bet"] for row in dataset_paths]
-        flair = [row["flair_bet"] for row in dataset_paths]
+        t1 = [row["t1_coreg_brain"] for row in dataset_paths]
+        flair = [row["new_flair_enhanced"] for row in dataset_paths]
         labels = [row["label"] for row in dataset_paths]
-        white_mask = [row["new_mask"] for row in dataset_paths]
-        distance = [row["danielsson_dist"] for row in dataset_paths]
+        common_mask = [row["common_mask"] for row in dataset_paths]
 
-        return t1, flair, labels, white_mask, distance
+        return t1, flair, labels, common_mask
 
 
     def preprocess_all_labels(self, labels_paths_list, slice_shape, n_slices_all, remove_top, remove_bot, rm_extra_amsterdam):
@@ -146,11 +145,11 @@ class ImageParser():
                             "T1.nii.gz",
                             "T1_bet.nii.gz",
                             "T1_bet_mask.nii.gz",
-                            "distWMborder_Danielsson.nii.gz",
-                            "distWMborder_Maurer.nii.gz",
-                            "WMmask.nii.gz",
                             "FLAIR_enhanced_lb_masked.nii.gz",
-                            "FLAIR_enhanced_lb.nii.gz"}
+                            "FLAIR_enhanced_lb.nii.gz",
+                            "FLAIR-enhanced.nii.gz",
+                            "T1_bet_mask_rsfl.nii.gz",
+                            "T1_rsfl.nii.gz"}
         return file_name in possibilities
 
     def get_key(self, file_name):
@@ -162,12 +161,12 @@ class ImageParser():
                          "T1.nii.gz": "t1",
                          "T1_bet.nii.gz": "t1_bet",
                          "T1_bet_mask.nii.gz": "new_mask",
-                         "distWMborder_Danielsson.nii.gz": "danielsson_dist",
-                         "distWMborder_Maurer.nii.gz": "maurer_dist",
-                         "WMmask.nii.gz": "mask",
                          "wmh.nii.gz": "label",
                          "FLAIR_enhanced_lb_masked.nii.gz": "enhanced_masked",
-                         "FLAIR_enhanced_lb.nii.gz": "enhanced"}
+                         "FLAIR_enhanced_lb.nii.gz": "enhanced",
+                         "FLAIR-enhanced.nii.gz": "new_flair_enhanced",
+                         "T1_bet_mask_rsfl.nii.gz": "common_mask",
+                         "T1_rsfl.nii.gz": "t1_coreg_brain"}
 
         if file_name not in possibilities:
             return None
@@ -259,7 +258,7 @@ class ImageParser():
             elif slice.shape[0] > to_slice_shape[0]:
                 diff = slice.shape[0] - to_slice_shape[0]
                 if self.is_odd(diff):
-                    slice_copy = slice_copy[diff//2 : -diff//2 + 1, :]
+                    slice_copy = slice_copy[diff // 2: -diff//2, :]
                 else:
                     slice_copy = slice_copy[diff // 2: -diff // 2, :]
 
@@ -276,7 +275,7 @@ class ImageParser():
             elif slice.shape[1] > to_slice_shape[1]:
                 diff = slice.shape[1] - to_slice_shape[1]
                 if self.is_odd(diff):
-                    slice_copy = slice_copy[:, diff // 2: -diff // 2 + 1]
+                    slice_copy = slice_copy[:, diff // 2: -diff // 2]
                 else:
                     slice_copy = slice_copy[:, diff // 2: -diff // 2]
 

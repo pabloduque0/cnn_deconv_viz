@@ -16,3 +16,19 @@ def get_coordinates(data_list):
 
 
     return coord_data_list
+
+
+def custom_split(data, subject_slices, indices):
+
+    new_indices = indices - np.arange(len(indices))
+    test_data = np.empty((1, *data.shape[1:]))
+    validation_data = data[new_indices[0] * subject_slices:(new_indices[0] + 1) * subject_slices]
+    data = np.concatenate([data[:new_indices[0] * subject_slices], data[(new_indices[0] + 1) * subject_slices:]])
+
+    for idx in new_indices[1:]:
+        subject_imgs = data[idx * subject_slices:(idx + 1) * subject_slices]
+        test_data = np.concatenate([test_data, subject_imgs])
+        data = np.concatenate([data[:idx * subject_slices], data[(idx + 1) * subject_slices:]])
+
+    return data, np.asanyarray(test_data), validation_data
+

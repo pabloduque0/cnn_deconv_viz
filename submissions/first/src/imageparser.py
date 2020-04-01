@@ -129,7 +129,6 @@ def process_all_images_np(paths_list, slice_shape, normalization=True):
 
 
 def resize_slices(slices_list, to_slice_shape):
-
     resized_slices = []
 
     for slice in slices_list:
@@ -138,7 +137,7 @@ def resize_slices(slices_list, to_slice_shape):
         if slice.shape[0] < to_slice_shape[0]:
             diff = to_slice_shape[0] - slice.shape[0]
             if is_odd(diff):
-                slice_copy = cv2.copyMakeBorder(slice_copy, diff//2, diff//2 + 1, 0, 0,
+                slice_copy = cv2.copyMakeBorder(slice_copy, diff // 2, diff // 2 + 1, 0, 0,
                                                 cv2.BORDER_CONSTANT,
                                                 value=0.0)
             else:
@@ -149,7 +148,7 @@ def resize_slices(slices_list, to_slice_shape):
         elif slice.shape[0] > to_slice_shape[0]:
             diff = slice.shape[0] - to_slice_shape[0]
             if is_odd(diff):
-                slice_copy = slice_copy[diff//2 : -diff//2 + 1, :]
+                slice_copy = slice_copy[diff // 2: -diff // 2, :]
             else:
                 slice_copy = slice_copy[diff // 2: -diff // 2, :]
 
@@ -166,7 +165,7 @@ def resize_slices(slices_list, to_slice_shape):
         elif slice.shape[1] > to_slice_shape[1]:
             diff = slice.shape[1] - to_slice_shape[1]
             if is_odd(diff):
-                slice_copy = slice_copy[:, diff // 2: -diff // 2 + 1]
+                slice_copy = slice_copy[:, diff // 2: -diff // 2]
             else:
                 slice_copy = slice_copy[:, diff // 2: -diff // 2]
 
@@ -265,42 +264,6 @@ def standarize(image_list, slice_number):
     standarized_imgs = np.concatenate(standarized_imgs, axis=0)
     return standarized_imgs
 
-def study_intensity_values(flair_list, labels_list, slice_number):
-
-    flair_list = np.asanyarray(flair_list)
-    labels_list = np.asanyarray(labels_list)
-
-    for image_idx in range(flair_list.shape[0] // slice_number):
-        this_flair = flair_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
-        this_labels = labels_list[image_idx * slice_number:(image_idx + 1) * slice_number, :, :]
-        flair_labels_idx = np.where(this_labels[np.where(this_flair > 0)] > 0.)
-
-        flair_perc = normalize_quantile(this_flair, this_labels, slice_number)
-        flair_norm = np.asanyarray(normalize_minmax(this_flair, slice_number))
-        flair_perc = np.ravel(flair_perc[flair_perc > 0])
-        flair_norm = np.ravel(flair_norm[flair_norm > 0])
-
-        fig, ax = plt.subplots(2, 1)
-        ax[0].hist(flair_norm, bins=100, label="Norm_percentil", color="g", alpha=0.9)
-        ax[0].set_title("Min-max Normalization")
-        #ax_2y = ax[0].twinx()
-        #ax_2y.hist(flair_perc[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
-        #ax_2y.tick_params('y', colors='r')
-
-        ax[1].hist(flair_perc, bins=100, label="Norm_minmax", color="g", alpha=0.9)
-        ax[1].set_title("Thresholded Normalization")
-        #ax2_2y = ax[1].twinx()
-        #ax2_2y.hist(flair_norm[flair_labels_idx], bins=100, label="Norm_percentil", alpha=0.5, color="tab:red")
-        #ax2_2y.tick_params('y', colors='r')
-        plt.subplots_adjust(hspace=0.4)
-        plt.show()
-
-        """
-        for flair, flair2 in zip(flair_perc, flair_norm):
-            cv2.imshow("Flair-T1", np.concatenate([flair, flair2], axis=1))
-            cv2.waitKey(0)
-        """
-
 
 def remove_third_label(labels_list):
 
@@ -325,33 +288,3 @@ def generate_tophat(dataset):
     return tophat_list
 
 
-def extract_all_brains(self):
-    base_command = 'fsl5.0-bet '
-    brain_str = 'brain_'
-    for root, dirs, files in os.walk('../'):
-        for file in files:
-            filepath = root + '/' + file
-
-            if '.nii' in file and file != 'wmh.nii' and 'mask' not in file:
-                full_command = base_command + filepath + ' ' + root + '/' + brain_str + file
-                process = subprocess.Popen(full_command.split(), stdout=subprocess.PIPE)
-                output, error = process.communicate()
-
-                print('OUTPUT: ', output)
-                print('ERROR: ', error)
-
-
-def extract_enhanced_brains(self):
-    base_command = 'bet2 '
-    brain_str = 'brain_'
-    for root, dirs, files in os.walk('../'):
-        for file in files:
-            filepath = root + '/' + file
-
-            if file == "FLAIR_enhanced_lb.nii.gz":
-                full_command = base_command + filepath + ' ' + root + '/' + brain_str + file
-                process = subprocess.Popen(full_command.split(), stdout=subprocess.PIPE)
-                output, error = process.communicate()
-
-                print('OUTPUT: ', output)
-                print('ERROR: ', error)

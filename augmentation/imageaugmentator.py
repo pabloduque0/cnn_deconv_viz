@@ -30,50 +30,53 @@ class ImageAugmentator():
             raise ValueError("Wrong input. Image lists must be have the same length.")
 
         non_black_indices = [index for index, image in enumerate(dataset_y) if image[image > 0].shape != (0,)]
+        #repeated_indices = np.repeat(non_black_indices, 5)
         idx_group1, idx_group2, idx_group3, idx_group4, idx_group5 = utils.make_indices_groups(non_black_indices, len(non_black_indices)//5)
+
         # Rotations
-        rotated_xs, rotated_ys = self.perform_rotations(dataset_x[idx_group1],
-                                                        dataset_y[idx_group1])
+        rotated_xs, rotated_ys = self.perform_rotations(dataset_x[non_black_indices.copy()],
+                                                        dataset_y[non_black_indices.copy()])
         aug_dataset_x = np.concatenate([dataset_x, rotated_xs], axis=0)
         rotated_ys = np.expand_dims(np.asanyarray(rotated_ys)[:, :, :, 0], axis=3)
         aug_dataset_y = np.concatenate([dataset_y, rotated_ys], axis=0)
         del rotated_xs, rotated_ys
 
         # Shifts
-        shifted_xs, shifted_ys = self.perform_shifts(dataset_x[idx_group2],
-                                                     dataset_y[idx_group2])
+        shifted_xs, shifted_ys = self.perform_shifts(dataset_x[non_black_indices.copy()],
+                                                     dataset_y[non_black_indices.copy()])
         aug_dataset_x = np.concatenate([aug_dataset_x, shifted_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, shifted_ys], axis=0)
         del shifted_xs, shifted_ys
 
         # Shear
-        sheared_xs, sheared_ys = self.perform_shears(dataset_x[idx_group3],
-                                                     dataset_y[idx_group3])
+        sheared_xs, sheared_ys = self.perform_shears(dataset_x[non_black_indices.copy()],
+                                                     dataset_y[non_black_indices.copy()])
         aug_dataset_x = np.concatenate([aug_dataset_x, sheared_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, sheared_ys], axis=0)
         del sheared_xs, sheared_ys
 
         # Zoom
-        zoomed_xs, zoomed_ys = self.apply_zoom(dataset_x[idx_group4],
-                                               dataset_y[idx_group4])
+        zoomed_xs, zoomed_ys = self.apply_zoom(dataset_x[non_black_indices.copy()],
+                                               dataset_y[non_black_indices.copy()])
         aug_dataset_x = np.concatenate([aug_dataset_x, zoomed_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, zoomed_ys], axis=0)
         del zoomed_xs, zoomed_ys
 
         # Flips
-        flipped_xs, flipped_ys = self.perform_flips(dataset_x[idx_group5],
-                                                    dataset_y[idx_group5])
+        flipped_xs, flipped_ys = self.perform_flips(dataset_x[non_black_indices.copy()],
+                                                    dataset_y[non_black_indices.copy()])
         aug_dataset_x = np.concatenate([aug_dataset_x, flipped_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, flipped_ys], axis=0)
         del flipped_xs, flipped_ys
 
 
         # Multiple augmentations
-        mult_xs, mult_ys = self.mutiple_agumentations(dataset_x[non_black_indices], dataset_y[non_black_indices])
+        mult_xs, mult_ys = self.mutiple_agumentations(dataset_x[non_black_indices.copy()],
+                                                      dataset_y[non_black_indices.copy()])
         aug_dataset_x = np.concatenate([aug_dataset_x, mult_xs], axis=0)
         aug_dataset_y = np.concatenate([aug_dataset_y, mult_ys], axis=0)
         del mult_xs, mult_ys
-        del idx_group1, idx_group2, idx_group3, idx_group4, idx_group5
+        #del idx_group1, idx_group2, non_black_indices.copy(), idx_group4, idx_group5
         gc.collect()
 
         if mix_up:

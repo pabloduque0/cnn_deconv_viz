@@ -50,14 +50,14 @@ def create_conv_block(input_layer, filters):
     return output_layer
 
 def MiniBatchStddev(x, group_size=5): #again position of channels matter!
-    group_size = tf.minimum(group_size, tf.shape(x)[0])# Minibatch must be divisible by (or smaller than) group_size.
+    group_size = tf.minimum(group_size, tf.shape(input=x)[0])# Minibatch must be divisible by (or smaller than) group_size.
     s = x.shape                                             # [NCHW]  Input shape.
     y = tf.reshape(x, [group_size, -1, s[1], s[2], s[3]])   # [GMCHW] Split minibatch into M groups of size G.
     y = tf.cast(y, tf.float32)                              # [GMCHW] Cast to FP32.
-    y -= tf.reduce_mean(y, axis=0, keepdims=True)           # [GMCHW] Subtract mean over group.
-    y = tf.reduce_mean(tf.square(y), axis=0)                # [MCHW]  Calc variance over group.
+    y -= tf.reduce_mean(input_tensor=y, axis=0, keepdims=True)           # [GMCHW] Subtract mean over group.
+    y = tf.reduce_mean(input_tensor=tf.square(y), axis=0)                # [MCHW]  Calc variance over group.
     y = tf.sqrt(y + 1e-8)                                   # [MCHW]  Calc stddev over group.
-    y = tf.reduce_mean(y, axis=[1,2,3], keepdims=True)      # [M111]  Take average over fmaps and pixels.
+    y = tf.reduce_mean(input_tensor=y, axis=[1,2,3], keepdims=True)      # [M111]  Take average over fmaps and pixels.
     y = tf.cast(y, x.dtype)                                 # [M111]  Cast back to original data type.
     y = tf.tile(y, [group_size, s[1], s[2], 1])             # [N1HW]  Replicate over group and pixels.
     return tf.concat([x, y], axis=-1)

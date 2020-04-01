@@ -33,7 +33,7 @@ GRADIENT_PENALTY_WEIGHT = 10  # As per the paper
 
 def write_log(callback, names, logs, batch_no):
     for name, value in zip(names, logs):
-        summary = tf.Summary()
+        summary = tf.compat.v1.Summary()
         summary_value = summary.value.add()
         summary_value.simple_value = value
         summary_value.tag = name

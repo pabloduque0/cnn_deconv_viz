@@ -26,10 +26,12 @@ def create_model(input_shape):
 
 def residual_block(input_layer, k_sizes, down_sample):
 
-    conv_1 = layers.Convolution2D(64, k_sizes, padding='same', activation="relu")(input_layer)
-    conv_2 = layers.Convolution2D(64, k_sizes, padding='same', activation="relu")(conv_1)
-    if down_sample:
-        conv_2 = layers.AveragePooling2D(pool_size=(2, 2))(conv_2)
-
+    conv_1 = layers.Convolution2D(128, k_sizes, padding='same', activation="relu")(input_layer)
+    conv_2 = layers.Convolution2D(128, k_sizes, padding='same', activation="relu")(conv_1)
     res = layers.Add()([conv_2, input_layer])
+    res = layers.Activation("relu")(res)
+    if down_sample:
+        res = layers.AveragePooling2D(pool_size=(2, 2))(res)
+
     return res
+

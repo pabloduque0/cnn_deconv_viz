@@ -43,10 +43,10 @@ def unpooling_with_argmax2D(x, poolsize, argmax):
 
     x_copy = tf.identity(unpooled_layer)
     for i in range(2):
-        x_copy = tf.reduce_mean(x_copy, axis=1)
+        x_copy = tf.reduce_mean(input_tensor=x_copy, axis=1)
 
     _, indices = tf.nn.top_k(x_copy, K.int_shape(argmax)[-1])
-    selected_maps = get_selected_maps(unpooled_layer, indices, tf.shape(argmax))
+    selected_maps = get_selected_maps(unpooled_layer, indices, tf.shape(input=argmax))
 
     unpooled_with_values = argmax * selected_maps
     return unpooled_with_values
@@ -54,18 +54,18 @@ def unpooling_with_argmax2D(x, poolsize, argmax):
 
 def get_selected_maps(tensor_input, indices, new_shape):
 
-    all_indices = tf.where(tf.equal(tensor_input, tensor_input))
+    all_indices = tf.compat.v1.where(tf.equal(tensor_input, tensor_input))
     to_take = tf.tile(tf.Variable([True]), [new_shape[-1]])
-    to_leave = tf.tile(tf.Variable([False]), [tf.shape(tensor_input)[-1]-new_shape[-1]])
+    to_leave = tf.tile(tf.Variable([False]), [tf.shape(input=tensor_input)[-1]-new_shape[-1]])
 
     one_img_mask = tf.concat([to_take, to_leave], axis=0)
-    multiples = tf.cast(tf.shape(all_indices)[0] / tf.shape(one_img_mask)[0], "int64")
+    multiples = tf.cast(tf.shape(input=all_indices)[0] / tf.shape(input=one_img_mask)[0], "int64")
     full_mask = tf.tile(one_img_mask, [multiples])
-    cropped_indexes = tf.boolean_mask(all_indices, full_mask)
+    cropped_indexes = tf.boolean_mask(tensor=all_indices, mask=full_mask)
 
     modified_idxs = cropped_indexes[:, :3]
     selected_maps = tf.cast(tf.reshape(indices, (-1,)), "int64")
-    repetitions = tf.cast(tf.shape(modified_idxs)[0] / tf.shape(selected_maps)[0], "int64")
+    repetitions = tf.cast(tf.shape(input=modified_idxs)[0] / tf.shape(input=selected_maps)[0], "int64")
     selected_maps = tf.tile(selected_maps, [repetitions])
     modified_idxs = tf.concat([modified_idxs, tf.expand_dims(selected_maps, -1)], -1)
 
@@ -77,10 +77,10 @@ def get_selected_maps(tensor_input, indices, new_shape):
 
 def reverse_upconcat(tensor_input, height_factor, width_factor):
     input_shape = K.int_shape(tensor_input)
-    output = tf.image.resize_nearest_neighbor(
+    output = tf.image.resize(
         tensor_input,
         [int(input_shape[1] * height_factor), int(input_shape[2] * width_factor)],
-        align_corners=False,
+        method=tf.image.ResizeMethod.NEAREST_NEIGHBOR,
         name=None
     )
     return output
@@ -122,11 +122,11 @@ def get_ordered_argmax(argmax, poolsize):
             for j in range(0, columns, poolsize[1]):
                 pool_section = argmax[i:i + poolsize[0], j:j + poolsize[1]]
 
-                flat_argmax = tf.cast(tf.argmax(K.flatten(pool_section)), tf.int32)
+                flat_argmax = tf.cast(tf.argmax(input=K.flatten(pool_section)), tf.int32)
 
                 # convert indices into 2D coordinates
-                argmax_row = flat_argmax // tf.shape(pool_section)[1] + i
-                argmax_col = flat_argmax % tf.shape(pool_section)[1] + j
+                argmax_row = flat_argmax // tf.shape(input=pool_section)[1] + i
+                argmax_col = flat_argmax % tf.shape(input=pool_section)[1] + j
 
                 # stack and return 2D coordinates
                 argmax = tf.Variable([tf.stack([argmax_row, argmax_col], axis=0)])
